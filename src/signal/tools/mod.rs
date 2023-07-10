@@ -1,4 +1,4 @@
-use num::{complex::Complex64, Complex, Num, One, Zero};
+use num::{Complex, Num, One, Zero};
 
 use super::output_type::Zpk;
 
@@ -22,7 +22,7 @@ pub fn bilinear_zpk(mut input: Zpk, fs: f64) -> Zpk {
 
     input.z.extend(vec![-Complex::one(); degree]);
     println!("{z_prod} -- {p_prod}");
-    input.k = input.k * (z_prod / p_prod).re;
+    input.k *= (z_prod / p_prod).re;
     input
 }
 
@@ -81,7 +81,7 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
         .collect::<Vec<_>>()
         .try_into()
         .unwrap();
-    polyval(v.into(), tmp.into())
+    polyval(v.into(), tmp)
 }
 
 
@@ -89,7 +89,7 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
 mod tests {
     use num::complex::Complex64;
 
-    use crate::special::kv::{kv, kve};
+    use crate::special::kv::{kve};
     #[test]
     fn test_i() {
         let res = kve(1.0, Complex64::new(-29.5, -88.33333333));

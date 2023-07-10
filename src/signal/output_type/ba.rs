@@ -10,7 +10,7 @@ impl From<Zpk> for Ba {
     fn from(value: Zpk) -> Self {
         let mut b = poly(&value.z);
 
-        b.iter_mut().for_each(|a| *a = *a * value.k);
+        b.iter_mut().for_each(|a| *a *= value.k);
 
         let mut a = poly(&value.p);
         {

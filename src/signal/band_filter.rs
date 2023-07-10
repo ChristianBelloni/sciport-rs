@@ -104,7 +104,7 @@ pub fn lp2hp_zpk(mut input: Zpk, wo: f64) -> Zpk {
     input.p = input.p.iter().map(|&a| wo / a).collect();
 
     input.z.extend(vec![Complex::zero(); degree]);
-    input.k = input.k * (z_prod / p_prod).re;
+    input.k *= (z_prod / p_prod).re;
     println!("{}", input.k);
     input
 }
@@ -131,7 +131,7 @@ pub fn lp2bp_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
 
     input.z.extend(vec![Complex::zero(); degree]);
 
-    input.k = input.k * bw.powi(degree as _);
+    input.k *= bw.powi(degree as _);
     input
 }
 pub fn lp2bs_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
@@ -165,7 +165,7 @@ pub fn lp2bs_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
     input.z.extend(vec![Complex::new(0.0, 1.0) * wo; degree]);
     input.z.extend(vec![Complex::new(0.0, -1.0) * wo; degree]);
 
-    input.k = input.k * (z_prod / p_prod).re;
+    input.k *= (z_prod / p_prod).re;
 
     input
 }

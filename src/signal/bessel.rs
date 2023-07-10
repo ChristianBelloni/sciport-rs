@@ -38,7 +38,7 @@ impl BesselFilter<Zpk> {
     }
 }
 
-fn besselap(order: u32, norm: BesselNorm) -> Zpk {
+fn besselap(order: u32, _norm: BesselNorm) -> Zpk {
     let z = Vec::<Complex<f64>>::new();
     let mut p: Vec<Complex<f64>>;
     let k = 1.0;
@@ -80,10 +80,10 @@ fn _bessel_zeros(order: u32) -> Vec<Complex<f64>> {
         (kve(order - 0.5, 1.0 / x) / (2.0 * x.powi(2))) - (kve(order + 0.5, 1.0 / x) / (x.powi(2)))
             + (kve(order + 1.5, 1.0 / x) / (2.0 * x.powi(2)))
     };
-    let x = _aberth(f, fp, &x0);
+    
     // TODO implement newton's method to improve accuracy and average complex conjugates
 
-    x
+    _aberth(f, fp, &x0)
 }
 
 fn _aberth<F: Fn(Complex<f64>) -> Complex<f64>, FP: Fn(Complex<f64>) -> Complex<f64>>(
