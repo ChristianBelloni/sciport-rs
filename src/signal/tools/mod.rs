@@ -1,4 +1,4 @@
-use num::{Complex, Num, One, Zero};
+use num::{Complex, Num, One};
 
 use super::output_type::Zpk;
 
@@ -45,13 +45,10 @@ fn mul_by_x<T: Num>(coeff: &mut Vec<T>) {
     coeff.push(T::zero());
 }
 
-fn mul_by_scalar<T: Num + Copy>(coeff: &mut Vec<T>, scalar: T) {
+fn mul_by_scalar<T: Num + Copy>(coeff: &mut [T], scalar: T) {
     coeff.iter_mut().for_each(move |a| *a = *a * scalar);
 }
 
-fn sub_scalar<T: Num + Copy>(coeff: &mut Vec<T>, scalar: T) {
-    coeff.iter_mut().for_each(|a| *a = *a - scalar);
-}
 
 fn sub_coeff<T: Num + Copy>(coeff: &mut [T], ar: &[T]) {
     for (i, c) in coeff.iter_mut().enumerate() {

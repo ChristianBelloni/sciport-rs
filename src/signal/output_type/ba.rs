@@ -86,12 +86,12 @@ fn mul_by_x(input: &mut Vec<Complex<f64>>) {
 }
 
 #[allow(unused)]
-fn mul_by_scalar(input: &mut Vec<Complex<f64>>, scalar: Complex<f64>) {
+fn mul_by_scalar(input: &mut [Complex<f64>], scalar: Complex<f64>) {
     input.iter_mut().for_each(|a| *a *= scalar);
 }
 
 #[allow(unused)]
-fn sub(input: &mut Vec<Complex<f64>>, other: &[Complex<f64>]) {
+fn sub(input: &mut [Complex<f64>], other: &[Complex<f64>]) {
     for (i, item) in other.iter().enumerate() {
         *input.get_mut(i).unwrap() = *input.get(i).unwrap() - item;
     }
