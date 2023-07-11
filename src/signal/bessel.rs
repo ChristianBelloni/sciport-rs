@@ -6,7 +6,7 @@ use num::{
 };
 
 use crate::{
-    signal::tools::{find_root, find_root_complex, newton, polyval},
+    signal::tools::{newton, polyval},
     special::kv::kve,
 };
 
@@ -51,14 +51,14 @@ fn besselap(order: u32, _norm: BesselNorm) -> Zpk {
     if order == 0 {
         p = vec![];
     } else {
-        println!("making zeroes");
+        ("making zeroes");
         p = _bessel_zeros(order).into_iter().map(|a| 1.0 / a).collect();
-        println!("making factorials");
+        ("making factorials");
         let a_last = (_falling_factorial(2 * order, order) / 2.0.powi(order as _)).floor();
-        println!("{a_last}");
-        println!("prev {:#?}", p);
+        ("{a_last}");
+        ("prev {:#?}", p);
         p.iter_mut()
-            .for_each(|a| *a = *a * 10.0.powf(-a_last.log10() / order as f64));
+            .for_each(|a| *a *= 10.0.powf(-a_last.log10() / order as f64));
     }
 
     Zpk { z, p, k }
@@ -89,21 +89,21 @@ fn _bessel_zeros(order: u32) -> Vec<Complex<f64>> {
         let third = kve(order + 1.5, 1.0 / x) / (2.0 * x.powi(2));
         first - second + third
     };
-    println!("before aberth {x0:#?}");
+    ("before aberth {x0:#?}");
     let mut x = _aberth(f, fp, &x0);
 
-    println!("before newton {x:#?}");
+    ("before newton {x:#?}");
     for i in &mut x {
-        *i = newton(f, fp, *i, 10.0.powi(-16).into(), 50);
+        *i = newton(f, fp, *i, 10.0.powi(-16), 50);
     }
 
-    println!("before sym {x:#?}");
+    ("before sym {x:#?}");
     let clone = x.clone().into_iter().map(|a| a.conj()).rev();
 
     let temp = x.iter().copied().zip(clone);
     let x: Vec<Complex<f64>> = temp.map(|(a, b)| (a + b) / 2.0).collect();
 
-    println!("raw bessel zeros {:#?}", x);
+    ("raw bessel zeros {:#?}", x);
     x
 }
 
@@ -140,7 +140,7 @@ fn _aberth<F: Fn(Complex<f64>) -> Complex<f64>, FP: Fn(Complex<f64>) -> Complex<
                 return new_zs;
             }
 
-            println!("current err: {err}");
+            ("current err: {err}");
             zs = new_zs.clone();
         }
     }
@@ -156,15 +156,15 @@ fn _campos_zeros(order: u32) -> Vec<Complex<f64>> {
     let n = order as _;
 
     let s = polyval(n, [0.0, 0.0, 2.0, 0.0, -3.0, 1.0]);
-    let b3 = (polyval(n, [16.0, -8.0]) / s);
-    let b2 = (polyval(n, [-24.0, -12.0, 12.0]) / s);
-    let b1 = (polyval(n, [8.0, 24.0, -12.0, -2.0]) / s);
-    let b0 = (polyval(n, [0.0, -6.0, 0.0, 5.0, -1.0]) / s);
+    let b3 = polyval(n, [16.0, -8.0]) / s;
+    let b2 = polyval(n, [-24.0, -12.0, 12.0]) / s;
+    let b1 = polyval(n, [8.0, 24.0, -12.0, -2.0]) / s;
+    let b0 = polyval(n, [0.0, -6.0, 0.0, 5.0, -1.0]) / s;
 
-    let r = (polyval(n, [0.0, 0.0, 2.0, 1.0]));
+    let r = polyval(n, [0.0, 0.0, 2.0, 1.0]);
 
-    let a1 = (polyval(n, [-6.0, -6.0]) / r);
-    let a2 = (6.0 / r);
+    let a1 = polyval(n, [-6.0, -6.0]) / r;
+    let a2 = 6.0 / r;
 
     let k = 1..(order + 1);
 
@@ -190,7 +190,7 @@ mod tests {
     use crate::{
         signal::{
             band_filter::BandFilter,
-            bessel::{_aberth, _bessel_zeros, _campos_zeros},
+            bessel::{_aberth, _campos_zeros},
             tools::newton,
         },
         special::kv::kve,
@@ -207,26 +207,26 @@ mod tests {
             BesselNorm::Phase,
         );
 
-        println!("{filter:#?}");
+        ("{filter:#?}");
     }
 
     #[test]
     fn test_besselap() {
         let res = besselap(4, BesselNorm::Phase);
 
-        println!("{res:#?}");
+        ("{res:#?}");
     }
     #[test]
     fn test_besselzeros() {
         let res = _campos_zeros(4);
         let order = 4;
         let f = |x: Complex<f64>| {
-            println!("{x}");
+            ("{x}");
             kve(order as f64 + 0.5, 1.0 / x)
         };
 
         let fp = |x: Complex<f64>| {
-            println!("{x}");
+            ("{x}");
             let order = order as f64;
 
             let first = kve(order - 0.5, 1.0 / x) / (2.0 * x.powi(2));
@@ -236,8 +236,8 @@ mod tests {
         };
         let mut res = _aberth(f, fp, &res);
         for i in &mut res {
-            *i = newton(f, fp, *i, 10.0_f64.powi(-16).into(), 50);
+            *i = newton(f, fp, *i, 10.0_f64.powi(-16), 50);
         }
-        println!("{res:#?}");
+        ("{res:#?}");
     }
 }

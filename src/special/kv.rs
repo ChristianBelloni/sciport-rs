@@ -1,5 +1,5 @@
-use num::{complex::Complex64, Complex, One};
-pub fn kv(v: f64, mut z: Complex<f64>) -> Complex<f64> {
+use num::{Complex};
+pub fn kv(v: f64, z: Complex<f64>) -> Complex<f64> {
     if z.is_nan() {
         panic!();
     }

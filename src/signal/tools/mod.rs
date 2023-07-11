@@ -85,7 +85,7 @@ pub fn find_root<N>(
     function: impl Fn(N) -> N,
     derivative: impl Fn(N) -> N,
     x0: N,
-    acceptable_err: N,
+    _acceptable_err: N,
     max_iterations: i32,
 ) -> Result<N, N>
 where
@@ -100,7 +100,7 @@ where
         next_x = current_x - deviation;
         current_x = next_x;
     }
-    return Ok(current_x);
+    Ok(current_x)
 }
 pub fn find_root_complex(
     f: impl Fn(Complex64) -> Complex64,
