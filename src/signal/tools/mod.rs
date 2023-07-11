@@ -1,4 +1,9 @@
-use num::{Complex, Num, One};
+use std::ops::{Div, Mul, Sub};
+
+use num::{
+    complex::{Complex64, ComplexFloat},
+    Complex, Num, One, Signed, Zero,
+};
 
 use super::output_type::Zpk;
 
@@ -49,7 +54,6 @@ fn mul_by_scalar<T: Num + Copy>(coeff: &mut [T], scalar: T) {
     coeff.iter_mut().for_each(move |a| *a = *a * scalar);
 }
 
-
 fn sub_coeff<T: Num + Copy>(coeff: &mut [T], ar: &[T]) {
     for (i, c) in coeff.iter_mut().enumerate() {
         *c = *c - ar[i]
@@ -58,18 +62,12 @@ fn sub_coeff<T: Num + Copy>(coeff: &mut [T], ar: &[T]) {
 
 pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]) -> Complex<f64> {
     fn polyval<const S: usize>(v: Complex<f64>, coeff: [Complex<f64>; S]) -> Complex<f64> {
-        let max_exp = coeff.len();
-
-        let it = coeff
+        coeff
             .iter()
             .enumerate()
-            .map(|(i, c)| {
-                let exp = max_exp - i;
-
-                v.powi(exp as _) * c
+            .fold(Complex64::zero(), |acc, (i, item)| {
+                acc + v.powi(i as _) * item
             })
-            .sum();
-        it
     }
 
     let tmp: [Complex<f64>; S] = coeff
@@ -81,12 +79,88 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
     polyval(v.into(), tmp)
 }
 
+pub fn polyval_2() {}
+
+pub fn find_root<N>(
+    function: impl Fn(N) -> N,
+    derivative: impl Fn(N) -> N,
+    x0: N,
+    acceptable_err: N,
+    max_iterations: i32,
+) -> Result<N, N>
+where
+    N: Div<Output = N> + Sub<Output = N>,
+    N: One<Output = N> + Copy + Mul<N, Output = N>,
+{
+    let mut current_x: N = x0;
+    let mut next_x: N;
+
+    for _ in 0..max_iterations {
+        let deviation = function(current_x) / derivative(current_x);
+        next_x = current_x - deviation;
+        current_x = next_x;
+    }
+    return Ok(current_x);
+}
+pub fn find_root_complex(
+    f: impl Fn(Complex64) -> Complex64,
+    fp: impl Fn(Complex64) -> Complex64,
+    x0: Complex64,
+    acceptable_err: f64,
+    max_iterations: i32,
+) -> Complex64 {
+    let mut current_x = x0;
+    let mut next_x;
+
+    for _ in 0..max_iterations {
+        let deviation = -f(current_x) / fp(current_x);
+
+        next_x = current_x + deviation;
+        current_x = next_x;
+        if deviation.abs() < acceptable_err {
+            return current_x;
+        }
+    }
+    panic!();
+}
+
+pub fn newton(
+    f: impl Fn(Complex64) -> Complex64,
+    fp: impl Fn(Complex64) -> Complex64,
+    mut x0: Complex64,
+    tol: f64,
+    maxiter: usize,
+) -> Complex64 {
+    for _ in 0..maxiter {
+        let fval = f(x0);
+
+        if fval == 0.0.into() {}
+
+        let fder = fp(x0);
+        let newton_step = fval / fder;
+        let x = x0 - newton_step;
+
+        if is_close(x, x0, tol) {
+            return x;
+        }
+        x0 = x;
+    }
+
+    panic!()
+}
+
+fn is_close(x: Complex64, y: Complex64, tol: f64) -> bool {
+    let df = x - y;
+    let a = df.abs();
+
+    a < tol
+}
 
 #[cfg(test)]
 mod tests {
     use num::complex::Complex64;
 
-    use crate::special::kv::{kve};
+    use crate::special::kv::kve;
     #[test]
     fn test_i() {
         let res = kve(1.0, Complex64::new(-29.5, -88.33333333));
