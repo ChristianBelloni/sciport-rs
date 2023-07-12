@@ -2,7 +2,7 @@ use std::ops::{Div, Mul, Sub};
 
 use num::{
     complex::{Complex64, ComplexFloat},
-    Complex, Num, One, Signed, Zero,
+    Complex, Num, One, Zero,
 };
 
 use super::output_type::Zpk;
