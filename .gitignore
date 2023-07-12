@@ -1,3 +1,5 @@
 /target
 /Cargo.lock
 /complex_bessel
+
+**/.DS_Store
