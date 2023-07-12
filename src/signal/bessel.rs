@@ -191,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_bessel_filter() {
-        let filter = BesselFilter::filter(
+        let _filter = BesselFilter::filter(
             4,
             BandFilter::Lowpass(0.2),
             crate::signal::Analog::False { fs: 2.0 },
@@ -201,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_besselap() {
-        let res = besselap(4, BesselNorm::Phase);
+        let _res = besselap(4, BesselNorm::Phase);
     }
     #[test]
     fn test_besselzeros() {

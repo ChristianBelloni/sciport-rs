@@ -79,8 +79,6 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
     polyval(v.into(), tmp)
 }
 
-pub fn polyval_2() {}
-
 pub fn find_root<N>(
     function: impl Fn(N) -> N,
     derivative: impl Fn(N) -> N,
