@@ -1,5 +1,3 @@
-use std::ops::{Div, Mul, Sub};
-
 use num::{
     complex::{Complex64, ComplexFloat},
     Complex, Num, One, Zero,

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use self::{
     band_filter::{lp2bf_zpk, BandFilter},
     output_type::{DesiredFilterOutput, FilterOutput, Zpk},

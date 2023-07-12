@@ -1,4 +1,4 @@
-use std::{borrow::Cow, marker::PhantomData};
+use std::marker::PhantomData;
 
 use num::Complex;
 
@@ -6,7 +6,7 @@ use super::{
     band_filter::BandFilter,
     iir_filter,
     output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk},
-    Analog, IIRFilter,
+    Analog,
 };
 
 pub(crate) fn butter_filter(
