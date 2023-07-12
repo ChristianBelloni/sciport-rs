@@ -51,7 +51,7 @@ mod wrappers {
         let mut cyi = 0.0;
         let mut cwrkr = 0.0;
         let mut cwrki = 0.0;
-        
+
         let mut nz = 0;
         let mut ierr = 0;
 
@@ -102,7 +102,6 @@ mod wrappers {
         Ok(answer)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

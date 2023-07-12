@@ -1,8 +1,6 @@
 use std::marker::PhantomData;
 
-use num::{Complex};
-
-
+use num::Complex;
 
 use super::{
     band_filter::BandFilter,
