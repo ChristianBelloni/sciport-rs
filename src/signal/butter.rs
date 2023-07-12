@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{borrow::Cow, marker::PhantomData};
 
 use num::Complex;
 
@@ -6,7 +6,7 @@ use super::{
     band_filter::BandFilter,
     iir_filter,
     output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk},
-    Analog,
+    Analog, IIRFilter,
 };
 
 pub(crate) fn butter_filter(
@@ -18,24 +18,55 @@ pub(crate) fn butter_filter(
     let proto = buttap(order);
     iir_filter(proto, order, band_filter, analog, desired_output)
 }
+/// Butterworth digital and analog filter design.
+///
+/// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
+///
+/// # Notes
+///
+/// The Butterworth filter has maximally flat frequency response in the passband.
+///
+/// See [`buttap`] for implementation details and references.
+///
+pub struct ButterFilterStandalone<T>(PhantomData<T>);
 
-pub struct ButterFilter<T>(PhantomData<T>);
-
-impl ButterFilter<Zpk> {
+impl ButterFilterStandalone<Zpk> {
+    /// Butterworth digital and analog filter design.
+    ///
+    /// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
+    ///
+    /// # Parameters
+    ///  - order : Order of the filter
+    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
+    /// frequency (rad/s).
+    /// for digital filters band is in the same units as [`Analog`]
+    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
+    ///  a sampling rate is required
     pub fn filter(order: u32, band_filter: BandFilter, analog: Analog) -> Zpk {
         let filter = butter_filter(order, band_filter, analog, DesiredFilterOutput::Zpk);
         filter.zpk()
     }
 }
 
-impl ButterFilter<Ba> {
+impl ButterFilterStandalone<Ba> {
+    /// Butterworth digital and analog filter design.
+    ///
+    /// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
+    ///
+    /// # Parameters
+    ///  - order : Order of the filter
+    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
+    /// frequency (rad/s).
+    /// for digital filters band is in the same units as [`Analog`]
+    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
+    ///  a sampling rate is required
     pub fn filter(order: u32, band_filter: BandFilter, analog: Analog) -> Ba {
         let filter = butter_filter(order, band_filter, analog, DesiredFilterOutput::Ba);
         filter.ba()
     }
 }
 
-fn buttap(order: u32) -> Zpk {
+pub fn buttap(order: u32) -> Zpk {
     let order = order as i32;
     let z = vec![];
     let range = ((-order + 1)..order).step_by(2);
@@ -58,31 +89,34 @@ fn buttap(order: u32) -> Zpk {
     Zpk { z, p, k }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::buttap;
-    use super::ButterFilter;
-    use crate::signal::band_filter::BandFilter;
-    use crate::signal::output_type::Ba;
+pub struct ButterFilter<T> {
+    order: u32,
+    band_filter: BandFilter,
+    analog: Analog,
+    cache: Option<T>,
+}
 
-    #[test]
-    fn test_buttap() {
-        let res = buttap(8);
-        println!("{:#?}", res.p);
-        assert_eq!(res.z, vec![]);
-    }
-
-    #[test]
-    fn test_base_case() {
-        let filter = ButterFilter::<Ba>::filter(
-            8,
-            BandFilter::Bandstop {
-                low: 0.2,
-                high: 0.4,
-            },
-            crate::signal::Analog::False { fs: 2.0 },
-        );
-
-        println!("{filter:#?}");
+impl<T> ButterFilter<T> {
+    pub fn new(order: u32, band_filter: BandFilter, analog: Analog) -> Self {
+        Self {
+            order,
+            band_filter,
+            analog,
+            cache: None,
+        }
     }
 }
+
+crate::impl_iir!(
+    ButterFilter<Zpk>,
+    Zpk,
+    self,
+    ButterFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog)
+);
+
+crate::impl_iir!(
+    ButterFilter<Ba>,
+    Ba,
+    self,
+    ButterFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog)
+);

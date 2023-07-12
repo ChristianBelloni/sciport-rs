@@ -35,6 +35,24 @@ pub fn relative_degree(input: &Zpk) -> usize {
     input.p.len() - input.z.len()
 }
 
+/// Compute polynomial coefficients from zeroes
+///
+/// # Examples
+///
+/// ```rust
+/// # use sciport_rs::signal::tools::poly;
+/// # use num::complex::Complex64;
+/// let zeros = [2, 3];
+///
+/// let coeffs = poly(&zeros);
+///
+/// assert_eq!(&coeffs, &[1, -5, 6]);
+///
+/// let complex_z = [ Complex64::new(2.1, 3.2), Complex64::new(1.0, 1.0) ];
+///
+/// let coeffs = poly(&complex_z);
+///
+/// ```
 pub fn poly<T: Num + Copy>(zeroes: &[T]) -> Vec<T> {
     let mut coeff = vec![T::one()];
     for z in zeroes {
@@ -79,49 +97,6 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
     polyval(v.into(), tmp)
 }
 
-pub fn find_root<N>(
-    function: impl Fn(N) -> N,
-    derivative: impl Fn(N) -> N,
-    x0: N,
-    _acceptable_err: N,
-    max_iterations: i32,
-) -> Result<N, N>
-where
-    N: Div<Output = N> + Sub<Output = N>,
-    N: One<Output = N> + Copy + Mul<N, Output = N>,
-{
-    let mut current_x: N = x0;
-    let mut next_x: N;
-
-    for _ in 0..max_iterations {
-        let deviation = function(current_x) / derivative(current_x);
-        next_x = current_x - deviation;
-        current_x = next_x;
-    }
-    Ok(current_x)
-}
-pub fn find_root_complex(
-    f: impl Fn(Complex64) -> Complex64,
-    fp: impl Fn(Complex64) -> Complex64,
-    x0: Complex64,
-    acceptable_err: f64,
-    max_iterations: i32,
-) -> Complex64 {
-    let mut current_x = x0;
-    let mut next_x;
-
-    for _ in 0..max_iterations {
-        let deviation = -f(current_x) / fp(current_x);
-
-        next_x = current_x + deviation;
-        current_x = next_x;
-        if deviation.abs() < acceptable_err {
-            return current_x;
-        }
-    }
-    panic!();
-}
-
 pub fn newton(
     f: impl Fn(Complex64) -> Complex64,
     fp: impl Fn(Complex64) -> Complex64,
@@ -158,7 +133,7 @@ fn is_close(x: Complex64, y: Complex64, tol: f64) -> bool {
 mod tests {
     use num::complex::Complex64;
 
-    use crate::special::kv::kve;
+    use crate::special::kve;
     #[test]
     fn test_i() {
         let res = kve(1.0, Complex64::new(-29.5, -88.33333333));

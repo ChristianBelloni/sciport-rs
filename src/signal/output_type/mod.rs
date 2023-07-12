@@ -1,5 +1,6 @@
 use num::Complex;
 mod ba;
+mod sos;
 mod zpk;
 
 #[derive(Debug, Clone, Copy)]

@@ -7,13 +7,13 @@ use num::{
 
 use crate::{
     signal::tools::{newton, polyval},
-    special::kv::kve,
+    special::kve,
 };
 
 use super::{
     band_filter::BandFilter,
     iir_filter,
-    output_type::{DesiredFilterOutput, FilterOutput, Zpk},
+    output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk},
     Analog,
 };
 
@@ -36,15 +36,62 @@ pub(crate) fn bessel_filter(
     iir_filter(proto, order, band_filter, analog, desired_output)
 }
 
-pub struct BesselFilter<T>(PhantomData<T>);
+/// Bessel/Thomson digital and analog filter design.
+/// Design a Nth-order digital or analog Bessel filter and return the filter coefficients
+///
+/// # Notes
+///
+/// Also known as a Thomson filter, the analog Bessel filter has maximally flat group delay and<br/>
+/// maximally linear phase response, with very little ringing in the step response.<br/>
 
-impl BesselFilter<Zpk> {
+/// The Bessel is inherently an analog filter. This function generates digital Bessel filters using the bilinear transform,<br/>
+/// which does not preserve the phase response of the analog filter. As such, it is only approximately correct at frequencies below about fs/4.<br/>
+/// To get maximally-flat group delay at higher frequencies, the analog Bessel filter must be transformed using phase-preserving techniques.<br/>
+///
+/// See [`besselap`] for implementation details and references.
+///
+/// # References
+///
+/// - Thomson, W.E., “Delay Networks having Maximally Flat Frequency Characteristics”, Proceedings</br>
+/// of the Institution of Electrical Engineers, Part III, November 1949, Vol. 96, No. 44, pp. 487-490.
+pub struct BesselFilterStandalone<T>(PhantomData<T>);
+
+impl BesselFilterStandalone<Zpk> {
+    /// Bessel/Thomson digital and analog filter design.
+    /// Design a Nth-order digital or analog Bessel filter and return the filter coefficients
+    ///
+    /// # Parameters
+    ///  - order : Order of the filter
+    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
+    /// frequency (rad/s).
+    /// for digital filters band is in the same units as [`Analog`]
+    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
+    ///  a sampling rate is required
+    ///  - norm: Critical frequency normalization, see [`BesselNorm`] for more info
     pub fn filter(order: u32, band_filter: BandFilter, analog: Analog, norm: BesselNorm) -> Zpk {
         bessel_filter(order, band_filter, analog, norm, DesiredFilterOutput::Zpk).zpk()
     }
 }
 
-fn besselap(order: u32, _norm: BesselNorm) -> Zpk {
+impl BesselFilterStandalone<Ba> {
+    /// Bessel/Thomson digital and analog filter design.
+    /// Design a Nth-order digital or analog Bessel filter and return the filter coefficients
+    ///
+    /// # Parameters
+    ///  - order : Order of the filter
+    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
+    /// frequency (rad/s).
+    /// for digital filters band is in the same units as [`Analog`]
+    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
+    ///  a sampling rate is required
+    ///  - norm: Critical frequency normalization, see [`BesselNorm`] for more info
+    pub fn filter(order: u32, band_filter: BandFilter, analog: Analog, norm: BesselNorm) -> Ba {
+        bessel_filter(order, band_filter, analog, norm, DesiredFilterOutput::Ba).ba()
+    }
+}
+
+/// TODO! _norm defaults to Phase, other normalizations are not implemented
+pub fn besselap(order: u32, _norm: BesselNorm) -> Zpk {
     let z = Vec::<Complex<f64>>::new();
     let mut p: Vec<Complex<f64>>;
     let k = 1.0;
@@ -174,6 +221,28 @@ fn _campos_zeros(order: u32) -> Vec<Complex<f64>> {
         .collect::<Vec<_>>()
 }
 
+pub struct BesselFilter<T> {
+    order: u32,
+    band_filter: BandFilter,
+    analog: Analog,
+    norm: BesselNorm,
+    cache: Option<T>,
+}
+
+crate::impl_iir!(
+    BesselFilter<Zpk>,
+    Zpk,
+    self,
+    BesselFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog, self.norm)
+);
+
+crate::impl_iir!(
+    BesselFilter<Ba>,
+    Ba,
+    self,
+    BesselFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog, self.norm)
+);
+
 #[cfg(test)]
 mod tests {
     use num::Complex;
@@ -182,16 +251,17 @@ mod tests {
         signal::{
             band_filter::BandFilter,
             bessel::{_aberth, _campos_zeros},
+            output_type::Zpk,
             tools::newton,
         },
-        special::kv::kve,
+        special::kve,
     };
 
-    use super::{besselap, BesselFilter, BesselNorm};
+    use super::{besselap, BesselFilterStandalone, BesselNorm};
 
     #[test]
     fn test_bessel_filter() {
-        let _filter = BesselFilter::filter(
+        let _filter = BesselFilterStandalone::<Zpk>::filter(
             4,
             BandFilter::Lowpass(0.2),
             crate::signal::Analog::False { fs: 2.0 },

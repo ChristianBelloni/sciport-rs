@@ -1,12 +1,24 @@
+use std::borrow::Cow;
+
 use self::{
     band_filter::{lp2bf_zpk, BandFilter},
     output_type::{DesiredFilterOutput, FilterOutput, Zpk},
     tools::bilinear_zpk,
 };
 
+// filter design
+
 pub mod band_filter;
+/// Bessel/Thomson digital and analog filter design.
 pub mod bessel;
+/// Butterworth digital and analog filter design.
 pub mod butter;
+pub mod butterord;
+pub mod cheby1;
+pub mod cheby2;
+pub mod ellip;
+// end filter design
+//
 pub mod output_type;
 pub mod tools;
 
@@ -25,7 +37,10 @@ impl Analog {
     }
 }
 
-pub(crate) fn iir_filter(
+/// Generic iir_filter
+///
+/// Takes a filter prototype and returns the final filter in the desired output
+pub fn iir_filter(
     proto: Zpk,
     _order: u32,
     mut band_filter: BandFilter,
@@ -48,4 +63,38 @@ pub(crate) fn iir_filter(
     }
 
     FilterOutput::get_output(result, desired_output)
+}
+
+pub trait IIRFilter<T: ToOwned> {
+    fn design_filter(&self) -> T;
+    fn cache(&self) -> &Option<T>;
+    fn cache_mut(&mut self) -> &mut Option<T>;
+
+    fn get_filter(&mut self) -> &T {
+        if self.cache().is_some() {
+            return self.cache().as_ref().unwrap();
+        } else {
+            let filter = self.design_filter();
+            self.cache_mut().insert(filter)
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! impl_iir {
+    ($f:ty, $T:ty, $sel:ident, $design:expr) => {
+        impl $crate::signal::IIRFilter<$T> for $f {
+            fn cache(&self) -> &Option<$T> {
+                &self.cache
+            }
+
+            fn cache_mut(&mut self) -> &mut Option<$T> {
+                &mut self.cache
+            }
+
+            fn design_filter(&$sel) -> $T {
+                $design
+            }
+        }
+    };
 }
