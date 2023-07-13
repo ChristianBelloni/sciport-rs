@@ -2,8 +2,14 @@
 name = "sciport-rs"
 version = "0.0.1"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Rust port of scipy"
+authors = ["Christian Belloni"]
+readme = "README.md"
+license = "MIT"
+keywords = ["scientific computing", "math", "science", "filter", "dsp"]
+categories = ["mathematics", "science", "algorithms"]
+homepage = "https://github.com/ChristianBelloni/sciport-rs"
+repository = "https://github.com/ChristianBelloni/sciport-rs"
 
 [dependencies]
 num = "0.4.0"
