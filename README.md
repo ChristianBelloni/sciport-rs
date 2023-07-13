@@ -65,3 +65,5 @@ The main feature of this module is the definition of numerous special functions
 of mathematical physics. Available functions include airy, elliptic, bessel, gamma, beta,
 hypergeometric, parabolic cylinder, mathieu, spheroidal wave, struve, and kelvin.
 
+
+If there's a specific module or function that you'd like to see been worked on open a pr linking the scipy documentation for the module or function
