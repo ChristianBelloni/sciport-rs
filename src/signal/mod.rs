@@ -83,6 +83,7 @@ pub fn iir_filter(
     }
 
     let mut result = lp2bf_zpk(proto, warped);
+
     if let Analog::False { fs } = &analog {
         result = bilinear_zpk(result, *fs);
     }

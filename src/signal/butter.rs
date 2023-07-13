@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use num::Complex;
+use ndarray::{array, Array1};
+use num::{complex::Complex64, Complex};
 
 use super::{
     band_filter::BandFilter,
@@ -111,11 +112,14 @@ pub(crate) fn butter_filter(
 
 pub fn buttap(order: u32) -> Zpk {
     let order = order as i32;
-    let z = vec![];
-    let range = ((-order + 1)..order).step_by(2);
+    let z = array![];
+    let mut range: Array1<Complex64> = ((-order + 1)..order)
+        .step_by(2)
+        .map(|a| (a as f64).into())
+        .collect();
 
-    fn make_iteration(item: i32, order: i32) -> Complex<f64> {
-        let numerator = Complex::new(0.0, 1.0) * std::f64::consts::PI * (item as f64);
+    fn make_iteration(item: Complex64, order: i32) -> Complex<f64> {
+        let numerator = Complex::new(0.0, 1.0) * std::f64::consts::PI * item;
         let denominator = 2.0 * order as f64;
 
         let temp = numerator / denominator;
@@ -123,11 +127,8 @@ pub fn buttap(order: u32) -> Zpk {
         -temp.exp()
     }
 
-    let p = range
-        .map(|item| make_iteration(item, order))
-        .collect::<Vec<_>>();
-
+    range.par_mapv_inplace(|item| make_iteration(item, order));
     let k = 1.0;
 
-    Zpk { z, p, k }
+    Zpk { z, p: range, k }
 }

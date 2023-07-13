@@ -8,11 +8,11 @@ use super::{Ba, Zpk};
 
 impl From<Zpk> for Ba {
     fn from(value: Zpk) -> Self {
-        let mut b = poly(&value.z);
+        let mut b = poly(value.z.view());
 
         b.iter_mut().for_each(|a| *a *= value.k);
 
-        let mut a = poly(&value.p);
+        let mut a = poly(value.p.view());
         {
             let mut pos_z_roots = value
                 .z

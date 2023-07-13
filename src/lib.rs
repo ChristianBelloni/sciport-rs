@@ -49,5 +49,17 @@
 //! }
 //! ```
 //!
+//! # Modules
+//!
+//! ## Signal Processing
+//!
+//! The signal processing toolbox currently contains some filtering functions, a limited set of filter design tools, and a few B-spline interpolation algorithms for 1- and 2-D data. While the B-spline algorithms could technically be placed under the interpolation category, they are included here because they only work with equally-spaced data and make heavy use of filter-theory and transfer-function formalism to provide a fast B-spline transform.
+//!
+//! ## Special
+//!
+//! The main feature of this module is the definition of numerous special functions
+//! of mathematical physics. Available functions include airy, elliptic, bessel, gamma, beta,
+//! hypergeometric, parabolic cylinder, mathieu, spheroidal wave, struve, and kelvin.
+//!
 pub mod signal;
 pub mod special;

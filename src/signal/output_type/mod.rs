@@ -1,4 +1,5 @@
-use num::Complex;
+use ndarray::Array1;
+use num::{complex::Complex64, Complex};
 mod ba;
 mod sos;
 mod zpk;
@@ -37,8 +38,8 @@ pub enum FilterOutput {
 /// Although the sets of roots are stored as vecs, their ordering does not matter: ([-1, -2], [-3, -4], 1) is the same filter as ([-2, -1], [-4, -3], 1).
 #[derive(Debug, Clone)]
 pub struct Zpk {
-    pub z: Vec<Complex<f64>>,
-    pub p: Vec<Complex<f64>>,
+    pub z: Array1<Complex64>,
+    pub p: Array1<Complex64>,
     pub k: f64,
 }
 
@@ -104,8 +105,8 @@ impl FilterOutput {
 /// This representation suffers from numerical error at higher orders, so other formats are preferred when possible.
 #[derive(Debug, Clone)]
 pub struct Ba {
-    pub a: Vec<Complex<f64>>,
-    pub b: Vec<Complex<f64>>,
+    pub a: Array1<Complex<f64>>,
+    pub b: Array1<Complex<f64>>,
 }
 
 #[derive(Debug, Clone)]

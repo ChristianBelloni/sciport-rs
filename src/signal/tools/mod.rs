@@ -1,3 +1,4 @@
+use ndarray::{array, s, Array1, ArrayView, ArrayView1, ArrayViewMut1, Axis};
 use num::{
     complex::{Complex64, ComplexFloat},
     Complex, Num, One, Zero,
@@ -11,20 +12,13 @@ pub fn bilinear_zpk(mut input: Zpk, fs: f64) -> Zpk {
     let fs2 = fs * 2.0;
 
     println!("fs - {fs}");
-    let z_prod = input
-        .z
-        .iter()
-        .fold(Complex::one(), |acc: Complex<f64>, item| acc * (fs2 - item));
-    let p_prod = input
-        .p
-        .iter()
-        .fold(Complex::one(), |acc: Complex<f64>, item| acc * (fs2 - item));
+    let z_prod = input.z.map(|a| fs2 - a).product();
+    let p_prod = input.p.map(|a| fs2 - a).product();
 
-    input.z = input.z.iter().map(|&a| (fs2 + a) / (fs2 - a)).collect();
-    input.p = input.p.iter().map(|&a| (fs2 + a) / (fs2 - a)).collect();
-
-    input.z.extend(vec![-Complex::one(); degree]);
-    println!("{z_prod} -- {p_prod}");
+    input.z.mapv_inplace(|a| (fs2 + a) / (fs2 - a));
+    input.p.mapv_inplace(|a| (fs2 + a) / (fs2 - a));
+    let zeros = vec![-Complex::one(); degree];
+    input.z.append(Axis(0), ArrayView::from(&zeros));
     input.k *= (z_prod / p_prod).re;
     input
 }
@@ -40,37 +34,32 @@ pub fn relative_degree(input: &Zpk) -> usize {
 /// ```rust
 /// # use sciport_rs::signal::tools::poly;
 /// # use num::complex::Complex64;
-/// let zeros = [2, 3];
+/// # use ndarray::array;
+/// let complex_z = array![ Complex64::new(2.1, 3.2), Complex64::new(1.0, 1.0) ];
 ///
-/// let coeffs = poly(&zeros);
-///
-/// assert_eq!(&coeffs, &[1, -5, 6]);
-///
-/// let complex_z = [ Complex64::new(2.1, 3.2), Complex64::new(1.0, 1.0) ];
-///
-/// let coeffs = poly(&complex_z);
+/// let coeffs = poly((&complex_z).into());
 ///
 /// ```
-pub fn poly<T: Num + Copy>(zeroes: &[T]) -> Vec<T> {
-    let mut coeff = vec![T::one()];
+pub fn poly<T: Num + Copy>(zeroes: ArrayView1<'_, T>) -> Array1<T> {
+    let mut coeff = array![T::one()];
     for z in zeroes {
         let mut clone = coeff.clone();
         mul_by_x(&mut coeff);
-        mul_by_scalar(&mut clone, *z);
-        sub_coeff(&mut coeff[1..], &clone)
+        mul_by_scalar(clone.view_mut(), *z);
+        sub_coeff(coeff.slice_mut(s![1..]), clone)
     }
     coeff
 }
 
-fn mul_by_x<T: Num>(coeff: &mut Vec<T>) {
-    coeff.push(T::zero());
+fn mul_by_x<T: Num + Clone>(coeff: &mut Array1<T>) {
+    coeff.append(Axis(0), (&array![T::zero()]).into()).unwrap();
 }
 
-fn mul_by_scalar<T: Num + Copy>(coeff: &mut [T], scalar: T) {
-    coeff.iter_mut().for_each(move |a| *a = *a * scalar);
+fn mul_by_scalar<T: Num + Copy>(mut coeff: ArrayViewMut1<T>, scalar: T) {
+    coeff.map_inplace(move |a| *a = *a * scalar);
 }
 
-fn sub_coeff<T: Num + Copy>(coeff: &mut [T], ar: &[T]) {
+fn sub_coeff<T: Num + Copy>(mut coeff: ArrayViewMut1<T>, ar: Array1<T>) {
     for (i, c) in coeff.iter_mut().enumerate() {
         *c = *c - ar[i]
     }

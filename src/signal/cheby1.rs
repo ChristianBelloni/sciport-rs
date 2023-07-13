@@ -1,10 +1,10 @@
-use std::marker::PhantomData;
-
 use super::band_filter::BandFilter;
 use super::output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk};
 use super::{iir_filter, Analog};
+use ndarray::{array, Array1};
 use num::complex::Complex64;
 use num::One;
+use std::marker::PhantomData;
 
 pub struct Cheby1FilterStandalone<T>(PhantomData<T>);
 
@@ -62,20 +62,19 @@ pub fn cheb1ap(order: u32, rp: f64) -> Zpk {
         return zpk;
     }
 
-    let z: Vec<Complex64> = vec![];
+    let z: Array1<Complex64> = array![];
     let eps = (10.0_f64.powf(0.1 * rp) - 1.0).sqrt();
     let mu = 1.0 / (order as f64) * (1.0 / eps).asinh();
-    let m = ((-(order as i32) + 1)..(order as i32)).step_by(2);
+    let m: Array1<Complex64> = ((-(order as i32) + 1)..(order as i32))
+        .step_by(2)
+        .map(|a| (a as f64).into())
+        .collect();
 
-    let theta = m.map(|a| std::f64::consts::PI * (a as f64) / (2.0 * order as f64));
+    let theta = m.map(|a| std::f64::consts::PI * a / (2.0 * order as f64));
 
-    let p: Vec<_> = theta.map(|a| -(mu + Complex64::i() * a).sinh()).collect();
+    let p: Array1<Complex64> = theta.map(|a| -(mu + Complex64::i() * a).sinh());
 
-    let mut k = p
-        .iter()
-        .map(|&a| -a)
-        .fold(Complex64::one(), |acc, item| acc * item)
-        .re;
+    let mut k = p.map(|&a| -a).product().re;
 
     if order % 2 == 0 {
         k /= (1.0 + eps * eps).sqrt();

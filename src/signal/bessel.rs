@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+use ndarray::{array, Array1};
 use num::{
     complex::{Complex64, ComplexFloat},
     Complex, One, Zero,
@@ -114,11 +115,11 @@ pub(crate) fn bessel_filter(
 
 /// TODO! _norm defaults to Phase, other normalizations are not implemented
 pub fn besselap(order: u32, _norm: BesselNorm) -> Zpk {
-    let z = Vec::<Complex<f64>>::new();
-    let mut p: Vec<Complex<f64>>;
+    let z = array![];
+    let mut p: Array1<Complex<f64>>;
     let k = 1.0;
     if order == 0 {
-        p = vec![];
+        p = array![];
     } else {
         p = _bessel_zeros(order).into_iter().map(|a| 1.0 / a).collect();
         let a_last = (_falling_factorial(2 * order, order) / 2.0.powi(order as _)).floor();
@@ -138,7 +139,7 @@ fn _falling_factorial(x: u32, n: u32) -> f64 {
     y
 }
 
-fn _bessel_zeros(order: u32) -> Vec<Complex<f64>> {
+fn _bessel_zeros(order: u32) -> Array1<Complex<f64>> {
     if order == 0 {
         return Default::default();
     }
@@ -163,7 +164,7 @@ fn _bessel_zeros(order: u32) -> Vec<Complex<f64>> {
     let clone = x.clone().into_iter().map(|a| a.conj()).rev();
 
     let temp = x.iter().copied().zip(clone);
-    let x: Vec<Complex<f64>> = temp.map(|(a, b)| (a + b) / 2.0).collect();
+    let x: Array1<Complex<f64>> = temp.map(|(a, b)| (a + b) / 2.0).collect();
 
     x
 }

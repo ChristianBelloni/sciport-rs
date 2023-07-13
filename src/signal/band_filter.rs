@@ -1,5 +1,6 @@
 use std::ops::{Div, Mul};
 
+use ndarray::{array, Array, ArrayView, ArrayView0, Axis};
 use num::{Complex, Num, One, Zero};
 
 use super::{output_type::Zpk, tools::relative_degree};
@@ -91,45 +92,45 @@ pub fn lp2bf_zpk(input: Zpk, wo: BandFilter) -> Zpk {
 
 pub fn lp2hp_zpk(mut input: Zpk, wo: f64) -> Zpk {
     let degree = relative_degree(&input);
-    let z_prod: Complex<f64> = input
-        .z
-        .iter()
-        .fold(Complex::one(), |acc, item| acc * (-item));
-    let p_prod: Complex<f64> = input
-        .p
-        .iter()
-        .fold(Complex::one(), |acc, item| acc * (-item));
 
-    input.z = input.z.iter().map(|&a| wo / a).collect();
-    input.p = input.p.iter().map(|&a| wo / a).collect();
+    let z_prod = input.z.map(|a| -a).product();
+    let p_prod = input.p.map(|a| -a).product();
 
-    input.z.extend(vec![Complex::zero(); degree]);
+    input.z.mapv_inplace(|a| wo / a);
+    input.p.mapv_inplace(|a| wo / a);
+
+    let zeros = vec![Complex::zero(); degree];
+    input.z.append(Axis(0), ArrayView::from(zeros.as_slice()));
+
     input.k *= (z_prod / p_prod).re;
     println!("{}", input.k);
     input
 }
 pub fn lp2lp_zpk(mut input: Zpk, wo: f64) -> Zpk {
     let degree = relative_degree(&input);
-    input.z = input.z.iter().map(|&a| a * wo).collect();
-    input.p = input.p.iter().map(|&a| a * wo).collect();
+    input.z.mapv_inplace(|a| a * wo);
+    input.p.mapv_inplace(|a| a * wo);
     input.k = (input.k * wo).powi(degree as _);
     println!("{}", input.k);
     input
 }
 pub fn lp2bp_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
     let degree = relative_degree(&input);
-    input.z.iter_mut().for_each(|a| *a = *a * bw / 2.0);
-    input.p.iter_mut().for_each(|a| *a = *a * bw / 2.0);
+    input.z.map_inplace(|a| *a = *a * bw / 2.0);
+    input.p.map_inplace(|a| *a = *a * bw / 2.0);
 
-    let z_lp1 = input.z.iter().map(|&a| a + (a.powi(2) - wo.powi(2)).sqrt());
-    let z_lp = z_lp1.chain(input.z.iter().map(|&a| a - (a.powi(2) - wo.powi(2)).sqrt()));
-    input.z = z_lp.collect();
+    let mut z_lp1 = input.z.map(|a| a + (a.powi(2) - wo.powi(2)).sqrt());
+    let z_lp2 = input.z.map(|a| a - (a.powi(2) - wo.powi(2)).sqrt());
+    z_lp1.append(Axis(0), (&z_lp2).into());
+    input.z = z_lp1;
 
-    let p_lp1 = input.p.iter().map(|&a| a + (a.powi(2) - wo.powi(2)).sqrt());
-    let p_lp = p_lp1.chain(input.p.iter().map(|&a| a - (a.powi(2) - wo.powi(2)).sqrt()));
-    input.p = p_lp.collect();
+    let mut p_lp1 = input.p.map(|a| a + (a.powi(2) - wo.powi(2)).sqrt());
+    let p_lp2 = input.p.map(|a| a - (a.powi(2) - wo.powi(2)).sqrt());
+    p_lp1.append(Axis(0), (&p_lp2).into());
+    input.p = p_lp1;
 
-    input.z.extend(vec![Complex::zero(); degree]);
+    let zeros = vec![Complex::zero(); degree];
+    input.z.append(Axis(0), ArrayView::from(zeros.as_slice()));
 
     input.k *= bw.powi(degree as _);
     input
@@ -137,20 +138,14 @@ pub fn lp2bp_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
 pub fn lp2bs_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
     let degree = relative_degree(&input);
 
-    let z_prod: Complex<f64> = input
-        .z
-        .iter()
-        .fold(Complex::one(), |acc, item| acc * (-item));
-    let p_prod: Complex<f64> = input
-        .p
-        .iter()
-        .fold(Complex::one(), |acc, item| acc * (-item));
+    let z_prod: Complex<f64> = input.z.map(|a| -a).product();
+    let p_prod: Complex<f64> = input.p.map(|a| -a).product();
 
-    input.z.iter_mut().for_each(|a| {
+    input.z.map_inplace(|a| {
         *a = (bw / 2.0) / *a;
     });
 
-    input.p.iter_mut().for_each(|a| {
+    input.p.map_inplace(|a| {
         *a = (bw / 2.0) / *a;
     });
 
@@ -162,8 +157,10 @@ pub fn lp2bs_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
     let p_lp = p_lp1.chain(input.p.iter().map(|&a| a - (a.powi(2) - wo.powi(2)).sqrt()));
     input.p = p_lp.collect();
 
-    input.z.extend(vec![Complex::new(0.0, 1.0) * wo; degree]);
-    input.z.extend(vec![Complex::new(0.0, -1.0) * wo; degree]);
+    let z_zeros = vec![Complex::new(0.0, 1.0) * wo; degree];
+    input.z.append(Axis(0), ArrayView::from(&z_zeros));
+    let z_zeros = vec![Complex::new(0.0, -1.0) * wo; degree];
+    input.z.append(Axis(0), ArrayView::from(&z_zeros));
 
     input.k *= (z_prod / p_prod).re;
 
