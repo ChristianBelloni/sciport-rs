@@ -86,7 +86,7 @@ pub fn cheb1ap(order: u32, rp: f64) -> Zpk {
 
 #[cfg(test)]
 mod tests {
-    use num::Signed;
+
     macro_rules! assert_almost_vec_eq {
         ($v1: expr, $v2: expr, $tol: expr) => {
             for (i, item) in $v1.iter().enumerate() {
@@ -97,10 +97,10 @@ mod tests {
             }
         };
     }
+
     use super::*;
     #[test]
     fn test_cheb1ap() {
-        // [-0.17221491+0.9159552j, -0.34442981-0.j,-0.17221491-0.9159552j]
         let res = cheb1ap(3, 2.3);
 
         assert_almost_vec_eq!(

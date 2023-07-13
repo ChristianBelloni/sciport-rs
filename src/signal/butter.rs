@@ -9,15 +9,48 @@ use super::{
     Analog,
 };
 
-pub(crate) fn butter_filter(
+/// Butterworth digital and analog filter design.
+///
+/// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
+///
+/// # Notes
+///
+/// The Butterworth filter has maximally flat frequency response in the passband.
+///
+/// See [`buttap`] for implementation details and references.
+///
+pub struct ButterFilter<T> {
     order: u32,
     band_filter: BandFilter,
     analog: Analog,
-    desired_output: DesiredFilterOutput,
-) -> FilterOutput {
-    let proto = buttap(order);
-    iir_filter(proto, order, band_filter, analog, desired_output)
+    cache: Option<T>,
 }
+
+impl<T> ButterFilter<T> {
+    pub fn new(order: u32, band_filter: BandFilter, analog: Analog) -> Self {
+        Self {
+            order,
+            band_filter,
+            analog,
+            cache: None,
+        }
+    }
+}
+
+crate::impl_iir!(
+    ButterFilter<Zpk>,
+    Zpk,
+    self,
+    ButterFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog)
+);
+
+crate::impl_iir!(
+    ButterFilter<Ba>,
+    Ba,
+    self,
+    ButterFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog)
+);
+
 /// Butterworth digital and analog filter design.
 ///
 /// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
@@ -66,6 +99,16 @@ impl ButterFilterStandalone<Ba> {
     }
 }
 
+pub(crate) fn butter_filter(
+    order: u32,
+    band_filter: BandFilter,
+    analog: Analog,
+    desired_output: DesiredFilterOutput,
+) -> FilterOutput {
+    let proto = buttap(order);
+    iir_filter(proto, order, band_filter, analog, desired_output)
+}
+
 pub fn buttap(order: u32) -> Zpk {
     let order = order as i32;
     let z = vec![];
@@ -88,35 +131,3 @@ pub fn buttap(order: u32) -> Zpk {
 
     Zpk { z, p, k }
 }
-
-pub struct ButterFilter<T> {
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    cache: Option<T>,
-}
-
-impl<T> ButterFilter<T> {
-    pub fn new(order: u32, band_filter: BandFilter, analog: Analog) -> Self {
-        Self {
-            order,
-            band_filter,
-            analog,
-            cache: None,
-        }
-    }
-}
-
-crate::impl_iir!(
-    ButterFilter<Zpk>,
-    Zpk,
-    self,
-    ButterFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog)
-);
-
-crate::impl_iir!(
-    ButterFilter<Ba>,
-    Ba,
-    self,
-    ButterFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog)
-);

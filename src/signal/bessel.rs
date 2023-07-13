@@ -17,23 +17,33 @@ use super::{
     Analog,
 };
 
+pub struct BesselFilter<T> {
+    order: u32,
+    band_filter: BandFilter,
+    analog: Analog,
+    norm: BesselNorm,
+    cache: Option<T>,
+}
+
+crate::impl_iir!(
+    BesselFilter<Zpk>,
+    Zpk,
+    self,
+    BesselFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog, self.norm)
+);
+
+crate::impl_iir!(
+    BesselFilter<Ba>,
+    Ba,
+    self,
+    BesselFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog, self.norm)
+);
+
 #[derive(Debug, Clone, Copy)]
 pub enum BesselNorm {
     Phase,
     Delay,
     Mag,
-}
-
-pub(crate) fn bessel_filter(
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    norm: BesselNorm,
-    desired_output: DesiredFilterOutput,
-) -> FilterOutput {
-    let proto = besselap(order, norm);
-
-    iir_filter(proto, order, band_filter, analog, desired_output)
 }
 
 /// Bessel/Thomson digital and analog filter design.
@@ -88,6 +98,18 @@ impl BesselFilterStandalone<Ba> {
     pub fn filter(order: u32, band_filter: BandFilter, analog: Analog, norm: BesselNorm) -> Ba {
         bessel_filter(order, band_filter, analog, norm, DesiredFilterOutput::Ba).ba()
     }
+}
+
+pub(crate) fn bessel_filter(
+    order: u32,
+    band_filter: BandFilter,
+    analog: Analog,
+    norm: BesselNorm,
+    desired_output: DesiredFilterOutput,
+) -> FilterOutput {
+    let proto = besselap(order, norm);
+
+    iir_filter(proto, order, band_filter, analog, desired_output)
 }
 
 /// TODO! _norm defaults to Phase, other normalizations are not implemented
@@ -220,28 +242,6 @@ fn _campos_zeros(order: u32) -> Vec<Complex<f64>> {
         .map(|(x, y)| *x + Complex::new(0.0, 1.0) * y)
         .collect::<Vec<_>>()
 }
-
-pub struct BesselFilter<T> {
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    norm: BesselNorm,
-    cache: Option<T>,
-}
-
-crate::impl_iir!(
-    BesselFilter<Zpk>,
-    Zpk,
-    self,
-    BesselFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog, self.norm)
-);
-
-crate::impl_iir!(
-    BesselFilter<Ba>,
-    Ba,
-    self,
-    BesselFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog, self.norm)
-);
 
 #[cfg(test)]
 mod tests {
