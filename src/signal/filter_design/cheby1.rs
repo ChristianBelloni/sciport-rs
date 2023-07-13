@@ -1,9 +1,8 @@
-use super::band_filter::BandFilter;
-use super::output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk};
-use super::{iir_filter, Analog};
+use crate::signal::band_filter::BandFilter;
+use crate::signal::output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk};
+use crate::signal::{iir_filter, Analog};
 use ndarray::{array, Array1};
 use num::complex::Complex64;
-use num::One;
 use std::marker::PhantomData;
 
 pub struct Cheby1FilterStandalone<T>(PhantomData<T>);

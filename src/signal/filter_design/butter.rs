@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use ndarray::{array, Array1};
 use num::{complex::Complex64, Complex};
 
-use super::{
+use crate::signal::{
     band_filter::BandFilter,
     iir_filter,
     output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk},

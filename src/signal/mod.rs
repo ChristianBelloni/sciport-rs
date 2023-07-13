@@ -31,19 +31,13 @@ use self::{
     tools::bilinear_zpk,
 };
 
-// filter design
+mod convolution;
+mod filter_design;
+
+//pub use convolution::*;
+pub use filter_design::*;
 
 pub mod band_filter;
-/// Bessel/Thomson digital and analog filter design.
-pub mod bessel;
-/// Butterworth digital and analog filter design.
-pub mod butter;
-pub mod butterord;
-pub mod cheby1;
-pub mod cheby2;
-pub mod ellip;
-// end filter design
-//
 pub mod output_type;
 pub mod tools;
 
