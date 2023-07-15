@@ -16,3 +16,6 @@ num = "0.4.0"
 complex-bessel-rs = { path = "../complex-bessel-rs", version = "0.0.4" }
 ndarray = { version = "0.15.6", features = ["rayon"] }
 
+[dev-dependencies]
+pyo3 = { version = "0.19.1", features = ["full"] }
+
