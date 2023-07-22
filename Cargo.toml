@@ -16,7 +16,6 @@ num = "0.4.0"
 complex-bessel-rs = { path = "../complex-bessel-rs", version = "0.0.4" }
 ndarray = { version = "0.15.6", features = ["rayon"] }
 numpy = "0.19.0"
-num-bigfloat = { version = "1.6.2", features = ["num-traits"] }
 
 [dev-dependencies]
 pyo3 = { version = "0.19.1", features = ["full", "auto-initialize"] }
