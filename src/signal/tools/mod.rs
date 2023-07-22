@@ -7,19 +7,18 @@ use num::{
 use super::output_type::Zpk;
 
 pub fn bilinear_zpk(mut input: Zpk, fs: f64) -> Zpk {
-    println!("z size {} p size {}", input.z.len(), input.p.len());
     let degree = relative_degree(&input);
     let fs2 = fs * 2.0;
 
-    println!("fs - {fs}");
     let z_prod = input.z.map(|a| fs2 - a).product();
     let p_prod = input.p.map(|a| fs2 - a).product();
 
     input.z.mapv_inplace(|a| (fs2 + a) / (fs2 - a));
     input.p.mapv_inplace(|a| (fs2 + a) / (fs2 - a));
     let zeros = vec![-Complex::one(); degree];
-    input.z.append(Axis(0), ArrayView::from(&zeros));
-    input.k *= (z_prod / p_prod).re;
+    input.z.append(Axis(0), ArrayView::from(&zeros)).unwrap();
+    let bilinear_factor = (z_prod / p_prod).re;
+    input.k *= bilinear_factor;
     input
 }
 

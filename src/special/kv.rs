@@ -1,4 +1,4 @@
-use num::Complex;
+use num::{Complex, Zero};
 
 /// Modified Bessel function of the second kind of real order v
 ///
@@ -8,11 +8,19 @@ use num::Complex;
 ///
 /// Wrapper on [complex_bessel_rs]
 ///
-pub fn kv(v: f64, z: Complex<f64>) -> Complex<f64> {
+pub fn kv(mut v: f64, mut z: Complex<f64>) -> Complex<f64> {
     if z.is_nan() {
-        panic!();
+        z = Complex::zero();
     }
-    complex_bessel_rs::bessel_k::bessel_k(v, z).unwrap()
+    if v.is_nan() {
+        v = 0.0;
+    }
+    let res = complex_bessel_rs::bessel_k::bessel_k(v, z);
+    if res.is_err() {
+        println!("{v} {z}");
+    }
+
+    res.unwrap()
 }
 
 /// Exponentially scaled modified Bessel function of the second kind.
@@ -41,8 +49,6 @@ mod tests {
         let res = kv(-3.5, c1);
         let res2 = kve(0.0, 1.0.into());
         let res3 = kve(3.5, 1.0 / Complex64::new(1.2, 0.3));
-        println!("{res}");
-        println!("{res2}");
         println!("{res3}");
     }
 }

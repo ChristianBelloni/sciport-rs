@@ -75,7 +75,6 @@ pub fn iir_filter(
             warped = ((band_filter * std::f64::consts::PI) / *fs).tan() * 2.0 * *fs;
         }
     }
-
     let mut result = lp2bf_zpk(proto, warped);
 
     if let Analog::False { fs } = &analog {

@@ -122,13 +122,23 @@ pub fn buttap(order: u32) -> Zpk {
         let numerator = Complex::new(0.0, 1.0) * std::f64::consts::PI * item;
         let denominator = 2.0 * order as f64;
 
-        let temp = numerator / denominator;
-
+        let mut temp = numerator / denominator;
+        if temp.im == 0.0 || temp.im == -0.0 {
+            temp.im = 0.0;
+        }
         -temp.exp()
     }
 
     range.par_mapv_inplace(|item| make_iteration(item, order));
+
+    let p = range.map(|a| {
+        if a.im == 0.0 || a.im == -0.0 {
+            Complex64::new(a.re, 0.0)
+        } else {
+            *a
+        }
+    });
     let k = 1.0;
 
-    Zpk { z, p: range, k }
+    Zpk { z, p, k }
 }

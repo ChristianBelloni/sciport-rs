@@ -211,11 +211,10 @@ fn _aberth<F: Fn(Complex<f64>) -> Complex<f64>, FP: Fn(Complex<f64>) -> Complex<
 
 // verified with python
 fn _campos_zeros(order: u32) -> Vec<Complex<f64>> {
-    if order == 0 {
-        return vec![-Complex::one()];
-    }
     let n = order as _;
-
+    if n == 1.0 {
+        return vec![Complex::new(-1.0, 0.0)];
+    }
     let s = polyval(n, [0.0, 0.0, 2.0, 0.0, -3.0, 1.0]);
     let b3 = polyval(n, [16.0, -8.0]) / s;
     let b2 = polyval(n, [-24.0, -12.0, 12.0]) / s;
