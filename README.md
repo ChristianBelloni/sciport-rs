@@ -6,6 +6,10 @@
 
 Sciport is a collection of mathematical algorithms ported from the popular python package Scipy
 
+## Dependencies
+
+To build this library is necessary to install gfortran-13
+
 ## Api design
 
 The main philosophy behind sciport is to change the api surface of scipy to better utilize the
