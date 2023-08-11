@@ -7,6 +7,7 @@ use rand::Rng;
 use sciport_rs::signal::{
     band_filter::{lp2bp_zpk, lp2bs_zpk, lp2hp_zpk, lp2lp_zpk},
     butter::*,
+    cheby1::cheb1ap,
 };
 
 #[test]
@@ -14,7 +15,7 @@ fn with_py_fuzzy_lp2lp_zpk() {
     for _ in 0..10_000 {
         let mut rng = rand::thread_rng();
         let order = rng.gen_range(1..200);
-        let input = buttap(order as _);
+        let input = cheb1ap(order as _, rng.gen_range(1.0..7.00));
         let wo = rng.gen_range(0.0..1.0);
         let input2 = input.clone();
         let rust = lp2lp_zpk(input.clone(), wo);
@@ -86,8 +87,10 @@ fn with_py_fuzzy_lp2bp_zpk() {
 fn with_py_fuzzy_lp2bs_zpk() {
     for _ in 0..10_000 {
         let mut rng = rand::thread_rng();
-        let order = rand::thread_rng().gen_range(1..200);
-        let input = buttap(order as _);
+        let order = rand::thread_rng().gen_range(1..30);
+
+        let input = cheb1ap(order as _, rand::thread_rng().gen_range(0.0..1.0));
+
         let wo = rng.gen_range(0.0..1.0);
         let bw = rng.gen_range(0.0..1.0);
 

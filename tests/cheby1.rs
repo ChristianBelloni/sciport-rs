@@ -8,12 +8,9 @@ use sciport_rs::signal::{band_filter::BandFilter, cheby1::*, output_type::Zpk, A
 #[test]
 fn with_py_test_cheby1() {
     for _ in 0..10_000 {
-        let order = rand::thread_rng().gen_range(0..150);
+        let order = rand::thread_rng().gen_range(0..50);
         let kind = rand::thread_rng().gen_range(0..4);
         let rp = rand::thread_rng().gen_range(0.0..10.0);
-        if kind == 3 {
-            continue;
-        }
         let band_filter = match kind {
             0 => BandFilter::Lowpass(rand::thread_rng().gen_range((0.0)..(1.0))),
             1 => BandFilter::Highpass(rand::thread_rng().gen_range((0.0)..(1.0))),

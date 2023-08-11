@@ -50,16 +50,16 @@ pub(crate) fn cheby1_filter(
     desired_output: DesiredFilterOutput,
 ) -> FilterOutput {
     let proto = cheb1ap(order, rp);
-    iir_filter(dbg!(proto), order, band_filter, analog, desired_output)
+    iir_filter(proto, order, band_filter, analog, desired_output)
 }
 pub fn cheb1ap(order: u32, rp: f64) -> Zpk {
     if order == 0 {
         let zpk = Zpk {
             z: Default::default(),
             p: Default::default(),
-            k: dbg!(10.0_f64.powf(-rp / 20.0)),
+            k: 10.0_f64.powf(-rp / 20.0),
         };
-        return dbg!(zpk);
+        return zpk;
     }
     let rp = Complex::from(rp);
     let z: Array1<Complex64> = array![];
