@@ -35,7 +35,7 @@ mod convolution;
 mod filter_design;
 
 //pub use convolution::*;
-pub use filter_design::*;
+pub use filter_design::{bessel, butter, cheby1};
 
 pub mod band_filter;
 pub mod output_type;

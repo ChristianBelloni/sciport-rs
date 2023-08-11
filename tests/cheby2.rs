@@ -3,10 +3,10 @@ use crate::common::check_zpk_filter;
 use common::with_scipy;
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
-use sciport_rs::signal::{band_filter::BandFilter, cheby1::*, output_type::Zpk, Analog};
+use sciport_rs::signal::{band_filter::BandFilter, cheby2::*, output_type::Zpk, Analog};
 
 #[test]
-fn with_py_test_cheby1() {
+fn with_py_test_cheby2() {
     for _ in 0..10_000 {
         let order = rand::thread_rng().gen_range(0..50);
         let kind = rand::thread_rng().gen_range(0..4);
@@ -40,24 +40,24 @@ fn with_py_test_cheby1() {
             },
             _ => unreachable!(),
         };
-        test_cheby1(order, band_filter, analog, rp);
+        test_cheby2(order, band_filter, analog, rp);
     }
 }
 
 #[test]
-fn test_cheb1ap() {
+fn test_cheb2ap() {
     for i in 0..200 {
         println!("testing buttap order {i}");
-        let rp = thread_rng().gen_range(0.0..10.0);
+        let rs = thread_rng().gen_range(0.0..10.0);
         let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(
-            "signal.cheb1ap({i}, rp={rp})"
+            "signal.cheb2ap({i}, rs={rs})"
         ));
-        let rust = cheb1ap(i, rp);
+        let rust = cheb2ap(i, rs);
         assert!(check_zpk_filter(rust, python));
     }
 }
 
-fn test_cheby1(order: u32, band_filter: BandFilter, analog: Analog, rp: f64) {
+fn test_cheby2(order: u32, band_filter: BandFilter, analog: Analog, rs: f64) {
     let (wn, btype) = match &band_filter {
         BandFilter::Bandstop { low, high } => (format!("[{low}, {high}]"), "bandstop"),
         BandFilter::Bandpass { low, high } => (format!("[{low}, {high}]"), "bandpass"),
@@ -70,13 +70,13 @@ fn test_cheby1(order: u32, band_filter: BandFilter, analog: Analog, rp: f64) {
         Analog::False { fs } => ("False", fs.to_string()),
     };
     let py_code = &format!(
-        "signal.cheby1({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs}, rp={rp})"
+        "signal.cheby2({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs}, rs={rs})"
     );
     let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(py_code);
-    let rust = Cheby1FilterStandalone::<Zpk>::filter(order, band_filter, analog, rp);
+    let rust = Cheby2FilterStandalone::<Zpk>::filter(order, band_filter, analog, rs);
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {
-        println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, rp: {rp}");
+        println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, rs: {rs}");
 
         println!("rust: {:#?}", rust);
         println!("python: {:#?}", python);
