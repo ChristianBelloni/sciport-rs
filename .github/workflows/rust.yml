@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - run: apt install gfortran-13
+    - run: apt install -y gfortran-13
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
