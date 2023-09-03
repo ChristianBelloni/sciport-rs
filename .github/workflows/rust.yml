@@ -16,6 +16,7 @@ jobs:
 
     steps:
     - run: sudo apt install -y gfortran-13
+    - run: pip3 install scipy numpy pandas
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
