@@ -33,9 +33,12 @@ use self::{
 
 mod convolution;
 mod filter_design;
+mod fir_filter_design;
 
 //pub use convolution::*;
-pub use filter_design::{bessel, butter, cheby1};
+pub use filter_design::{bessel, butter, cheby1, cheby2};
+
+pub use fir_filter_design::*;
 
 pub mod band_filter;
 pub mod output_type;

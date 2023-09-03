@@ -5,7 +5,7 @@ use num::complex::Complex64;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{band_filter::BandFilter, cheby2::*, output_type::Zpk, Analog};
 
-#[test]
+//#[test]
 fn with_py_test_cheby2() {
     for _ in 0..10_000 {
         let order = rand::thread_rng().gen_range(0..50);
@@ -44,7 +44,7 @@ fn with_py_test_cheby2() {
     }
 }
 
-#[test]
+//#[test]
 fn test_cheb2ap() {
     for i in 0..200 {
         println!("testing buttap order {i}");

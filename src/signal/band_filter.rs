@@ -1,6 +1,6 @@
 use std::ops::{Div, Mul, Neg};
 
-use ndarray::{array, concatenate, Array, ArrayView, ArrayView0, Axis};
+use ndarray::{array, concatenate, Array, Array1, ArrayView, ArrayView0, Axis};
 use num::{traits::Pow, Complex, Num, One, Signed, Zero};
 
 use super::{output_type::Zpk, tools::relative_degree};
@@ -26,6 +26,31 @@ impl BandFilter {
                 low: low.tan(),
                 high: high.tan(),
             },
+        }
+    }
+
+    pub fn size(&self) -> u8 {
+        match self {
+            BandFilter::Highpass(_) | BandFilter::Lowpass(_) => 1,
+            BandFilter::Bandstop { low: _, high: _ } | BandFilter::Bandpass { low: _, high: _ } => {
+                2
+            }
+        }
+    }
+    pub fn to_vec(self) -> Vec<f64> {
+        match self {
+            BandFilter::Highpass(f) | BandFilter::Lowpass(f) => vec![f],
+            BandFilter::Bandstop { low, high } | BandFilter::Bandpass { low, high } => {
+                vec![low, high]
+            }
+        }
+    }
+    pub fn to_array(self) -> Array1<f64> {
+        match self {
+            BandFilter::Highpass(f) | BandFilter::Lowpass(f) => array![f],
+            BandFilter::Bandstop { low, high } | BandFilter::Bandpass { low, high } => {
+                array![low, high]
+            }
         }
     }
 }
