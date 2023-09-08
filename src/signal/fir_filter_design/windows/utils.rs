@@ -12,12 +12,15 @@ pub fn extend(m: u64, sym: bool) -> (u64, bool) {
     }
 }
 
-pub fn truncate(w: Array1<f64>, needed: bool) -> Array1<f64> {
-    if needed {
-        let mut inner = w.to_vec();
-        inner.truncate(inner.len() - 1);
-        Array1::from_shape_vec(inner.len(), inner).unwrap()
-    } else {
-        w
+pub fn truncate(w: impl Into<Array1<f64>>, needed: bool) -> Array1<f64> {
+    fn inner(w: Array1<f64>, needed: bool) -> Array1<f64> {
+        if needed {
+            let mut inner = w.to_vec();
+            inner.truncate(inner.len() - 1);
+            Array1::from_shape_vec(inner.len(), inner).unwrap()
+        } else {
+            w
+        }
     }
+    inner(w.into(), needed)
 }

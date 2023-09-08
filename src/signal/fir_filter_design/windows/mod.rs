@@ -1,10 +1,10 @@
 mod barthann;
 mod utils;
 
-use ndarray::{array, s, Array1};
-pub(crate) use utils::*;
-
 pub use barthann::*;
+use ndarray::{array, s, Array1};
+use std::f64::consts::PI;
+pub(crate) use utils::*;
 
 pub enum WindowType {
     Boxcar,
@@ -46,7 +46,7 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::Bartlett => bartlett(m, sym),
         WindowType::FlatTop => flattop(m, sym),
         WindowType::Parzen => parzen(m, sym),
-        WindowType::Bohman => todo!(),
+        WindowType::Bohman => bohman(m, sym),
         WindowType::BlackmanHarris => todo!(),
         WindowType::Nuttall => todo!(),
         WindowType::Barthann => barthann(nx, fftbins),
@@ -122,7 +122,7 @@ pub fn general_cosine(m: u64, a: Array1<f64>, sym: impl Into<Option<bool>>) -> A
 
         let (m, needs_trunc) = extend(m, sym);
 
-        let fac = Array1::linspace(-std::f64::consts::PI, std::f64::consts::PI, m as _);
+        let fac = Array1::linspace(-PI, PI, m as _);
         let mut w = Array1::<f64>::zeros((m as _,));
 
         for (k, a) in a.iter().enumerate() {
@@ -238,7 +238,28 @@ pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         w.extend(&wb);
         w.extend(wa.slice(s![..;-1]));
 
-        truncate(w.into(), needs_trunc)
+        truncate(w, needs_trunc)
     }
     _parzen(m, sym.into().unwrap_or(true))
+}
+
+pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _bohman(m: u64, sym: bool) -> Array1<f64> {
+        if len_guards(m) {
+            return Array1::ones((m as usize,));
+        }
+        let (m, needs_trunc) = extend(m, sym);
+
+        let fac = Array1::linspace(-1.0, 1.0, m as _)
+            .slice(s![1..-1])
+            .mapv(f64::abs);
+        let temp = (1.0 - fac.clone()) * fac.mapv(|a| (PI * a).cos())
+            + 1.0 / PI * fac.mapv(|a| (PI * a).sin());
+        let mut w = Vec::with_capacity(temp.len());
+        w.push(0.0);
+        w.extend(temp);
+        w.push(0.0);
+        truncate(w, needs_trunc)
+    }
+    _bohman(m, sym.into().unwrap_or(true))
 }
