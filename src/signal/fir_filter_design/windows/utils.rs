@@ -12,7 +12,7 @@ pub fn extend(m: u64, sym: bool) -> (u64, bool) {
     }
 }
 
-pub fn truncate(w: impl Into<Array1<f64>>, needed: bool) -> Array1<f64> {
+pub fn truncate(w: impl Into<Array1<f64>>, needs_trunc: bool) -> Array1<f64> {
     fn inner(w: Array1<f64>, needed: bool) -> Array1<f64> {
         if needed {
             let mut inner = w.to_vec();
@@ -22,5 +22,14 @@ pub fn truncate(w: impl Into<Array1<f64>>, needed: bool) -> Array1<f64> {
             w
         }
     }
-    inner(w.into(), needed)
+    inner(w.into(), needs_trunc)
+}
+
+#[macro_export]
+macro_rules! if_len_guard {
+    ($m:ident) => {
+        if len_guards($m) {
+            return Array1::ones(($m as usize,));
+        }
+    };
 }

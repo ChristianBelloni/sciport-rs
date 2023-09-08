@@ -6,6 +6,8 @@ use ndarray::{array, s, Array1};
 use std::f64::consts::PI;
 pub(crate) use utils::*;
 
+use crate::if_len_guard;
+
 pub enum WindowType {
     Boxcar,
     Triang,
@@ -20,17 +22,35 @@ pub enum WindowType {
     Nuttall,
     Barthann,
     Cosine,
-    Exponential,
+    Exponential {
+        center: Option<f64>,
+        tau: Option<f64>,
+    },
     Tukey,
     Taylor,
     Lanczos,
-    Kaiser { beta: f64 },
-    KaiserBesselDerived { beta: f64 },
-    Gaussian { std_dev: f64 },
-    GeneralCosine { coeffs: Array1<f64> },
-    GeneralGaussian { power: f64, width: f64 },
-    Dpss { half_bandwidth: f64 },
-    Chebwin { attenuation: f64 },
+    Kaiser {
+        beta: f64,
+    },
+    KaiserBesselDerived {
+        beta: f64,
+    },
+    Gaussian {
+        std_dev: f64,
+    },
+    GeneralCosine {
+        coeffs: Array1<f64>,
+    },
+    GeneralGaussian {
+        power: f64,
+        width: f64,
+    },
+    Dpss {
+        half_bandwidth: f64,
+    },
+    Chebwin {
+        attenuation: f64,
+    },
 }
 
 pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>) {
@@ -47,11 +67,11 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::FlatTop => flattop(m, sym),
         WindowType::Parzen => parzen(m, sym),
         WindowType::Bohman => bohman(m, sym),
-        WindowType::BlackmanHarris => todo!(),
-        WindowType::Nuttall => todo!(),
+        WindowType::BlackmanHarris => blackmanharris(m, sym),
+        WindowType::Nuttall => nuttall(m, sym),
         WindowType::Barthann => barthann(nx, fftbins),
-        WindowType::Cosine => todo!(),
-        WindowType::Exponential => todo!(),
+        WindowType::Cosine => cosine(m, sym),
+        WindowType::Exponential { center, tau } => exponential(m, center, tau, sym),
         WindowType::Tukey => todo!(),
         WindowType::Taylor => todo!(),
         WindowType::Lanczos => todo!(),
@@ -67,9 +87,7 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
 
 pub fn boxcar(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _boxcar(m: u64, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::zeros(m as usize);
-        }
+        if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
 
@@ -82,9 +100,7 @@ pub fn boxcar(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 
 pub fn triang(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _triang(m: u64, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::ones(m as usize);
-        }
+        if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
 
@@ -113,12 +129,14 @@ pub fn triang(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     _triang(m, sym.into().unwrap_or(true))
 }
 
-pub fn general_cosine(m: u64, a: Array1<f64>, sym: impl Into<Option<bool>>) -> Array1<f64> {
+pub fn general_cosine(
+    m: u64,
+    a: impl Into<Array1<f64>>,
+    sym: impl Into<Option<bool>>,
+) -> Array1<f64> {
     let sym = sym.into().unwrap_or(true);
     fn _general_cosine(m: u64, a: Array1<f64>, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::zeros(m as usize);
-        }
+        if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
 
@@ -130,7 +148,7 @@ pub fn general_cosine(m: u64, a: Array1<f64>, sym: impl Into<Option<bool>>) -> A
         }
         truncate(w, needs_trunc)
     }
-    _general_cosine(m, a, sym)
+    _general_cosine(m, a.into(), sym)
 }
 
 pub fn blackman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
@@ -167,9 +185,7 @@ pub fn hann(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 
 pub fn bartlett(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _bartlett(m: u64, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::ones((m as usize,));
-        }
+        if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
 
@@ -218,9 +234,7 @@ fn extract<T: Clone>(condition: Array1<bool>, arr: Array1<T>) -> Array1<T> {
 
 pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _parzen(m: u64, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::ones((m as usize,));
-        }
+        if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
         let m = m as f64;
@@ -245,9 +259,8 @@ pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 
 pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _bohman(m: u64, sym: bool) -> Array1<f64> {
-        if len_guards(m) {
-            return Array1::ones((m as usize,));
-        }
+        if_len_guard!(m);
+
         let (m, needs_trunc) = extend(m, sym);
 
         let fac = Array1::linspace(-1.0, 1.0, m as _)
@@ -262,4 +275,64 @@ pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         truncate(w, needs_trunc)
     }
     _bohman(m, sym.into().unwrap_or(true))
+}
+
+pub fn blackmanharris(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _blackmanharris(m: u64, sym: bool) -> Array1<f64> {
+        general_cosine(m, vec![0.35875, 0.48829, 0.14128, 0.01168], sym)
+    }
+
+    _blackmanharris(m, sym.into().unwrap_or(true))
+}
+
+pub fn nuttall(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _nuttall(m: u64, sym: bool) -> Array1<f64> {
+        general_cosine(m, vec![0.3635819, 0.4891775, 0.1365995, 0.0106411], sym)
+    }
+
+    _nuttall(m, sym.into().unwrap_or(true))
+}
+
+pub fn cosine(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _cosine(m: u64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+        let (m, needs_trunc) = extend(m, sym);
+
+        let w = Array1::range(0.0, m as _, 1.0);
+        let m = m as f64;
+        let w = (PI / m * w + 0.5).mapv(f64::sin);
+
+        truncate(w, needs_trunc)
+    }
+    _cosine(m, sym.into().unwrap_or(true))
+}
+
+pub fn exponential(
+    m: u64,
+    center: impl Into<Option<f64>>,
+    tau: impl Into<Option<f64>>,
+    sym: impl Into<Option<bool>>,
+) -> Array1<f64> {
+    fn _exponential(m: u64, center: Option<f64>, tau: f64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+        let (m, needs_trunc) = extend(m, sym);
+
+        let center = if let Some(center) = center {
+            center
+        } else {
+            (m as f64) - 1.0 / 2.0
+        };
+
+        let n = Array1::range(0.0, m as f64, 1.0);
+        let w = (-(n - center).mapv(f64::abs) / tau).mapv(f64::exp);
+
+        truncate(w, needs_trunc)
+    }
+
+    _exponential(
+        m,
+        center.into(),
+        tau.into().unwrap_or(1.0),
+        sym.into().unwrap_or(true),
+    )
 }
