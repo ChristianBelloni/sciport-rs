@@ -65,8 +65,6 @@ impl AlmostEq for f64 {
 }
 
 pub fn almost_eq<T: AlmostEq + Debug>(lhs: &T, rhs: &T, tol: f64) -> bool {
-    
-
     lhs.almost_eq(rhs, tol)
 }
 
