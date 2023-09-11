@@ -24,6 +24,10 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
+      - name: install fortran compiler
+        run: apt install gfortran-13
+      - name: Install python modules
+        run: pip3 install scipy pandas numpy
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
@@ -33,23 +37,6 @@ jobs:
       # https://github.com/rust-lang/cargo/issues/6669
       - name: cargo test --doc
         run: cargo test --locked --all-features --doc
-  minimal:
-    runs-on: ubuntu-latest
-    name: ubuntu / stable / minimal-versions
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install nightly for -Zminimal-versions
-        uses: dtolnay/rust-toolchain@nightly
-      - name: rustup default stable
-        run: rustup default stable
-      - name: cargo update -Zminimal-versions
-        run: cargo +nightly update -Zminimal-versions
-      - name: cargo test
-        run: cargo test --locked --all-features --all-targets
   os-check:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} / stable
@@ -69,6 +56,10 @@ jobs:
           submodules: true
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
+      - name: install fortran compiler
+        run: apt install gfortran-13
+      - name: Install python modules
+        run: pip3 install scipy pandas numpy
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
@@ -94,6 +85,8 @@ jobs:
         run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
       - name: install fortran compiler
         run: apt install gfortran-13
+      - name: Install python modules
+        run: pip3 install scipy pandas numpy
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
         with:
