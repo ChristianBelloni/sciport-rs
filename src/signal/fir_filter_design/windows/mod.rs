@@ -26,7 +26,9 @@ pub enum WindowType {
         center: Option<f64>,
         tau: Option<f64>,
     },
-    Tukey,
+    Tukey {
+        alpha: Option<f64>,
+    },
     Taylor,
     Lanczos,
     Kaiser {
@@ -72,7 +74,7 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::Barthann => barthann(nx, fftbins),
         WindowType::Cosine => cosine(m, sym),
         WindowType::Exponential { center, tau } => exponential(m, center, tau, sym),
-        WindowType::Tukey => todo!(),
+        WindowType::Tukey { alpha } => tukey(m, alpha, sym),
         WindowType::Taylor => todo!(),
         WindowType::Lanczos => todo!(),
         WindowType::Kaiser { beta } => todo!(),
@@ -335,4 +337,42 @@ pub fn exponential(
         tau.into().unwrap_or(1.0),
         sym.into().unwrap_or(true),
     )
+}
+
+pub fn tukey(m: u64, alpha: impl Into<Option<f64>>, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _tukey(m: u64, alpha: f64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+
+        if alpha <= 0.0 {
+            return Array1::ones((m as usize,));
+        } else if alpha >= 1.0 {
+            return hann(m, sym);
+        }
+
+        let (m, needs_trunc) = extend(m, sym);
+        let m = m as f64;
+        let n = Array1::range(0.0, m, 1.0);
+
+        let width = (alpha * (m - 1.0) / 2.0).floor() as usize;
+
+        let n1 = n.slice(s![0..(width + 1)]);
+        let n2 = n.slice(s![(width + 1)..((m as usize) - width - 1)]);
+        let n3 = n.slice(s![(m as usize - width - 1)..]);
+
+        let w1 =
+            0.5 * (1.0 + (PI * (-1.0 + 2.0 * n1.to_owned() / alpha / (m - 1.0))).mapv(f64::cos));
+        let w2 = Array1::<f64>::zeros((n2.len(),));
+        let w3 = 0.5
+            * (1.0
+                + (PI * (-2.0 / alpha + 1.0 + 2.0 * n3.to_owned() / alpha / (m - 1.0)))
+                    .mapv(f64::cos));
+
+        let mut w = Vec::with_capacity(w1.len() + w2.len() + w3.len());
+        w.extend(w1);
+        w.extend(w2);
+        w.extend(w3);
+        truncate(w, needs_trunc)
+    }
+
+    _tukey(m, alpha.into().unwrap_or(0.5), sym.into().unwrap_or(true))
 }
