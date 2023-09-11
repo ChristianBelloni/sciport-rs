@@ -8,6 +8,7 @@ pub(crate) use utils::*;
 
 use crate::if_len_guard;
 
+#[allow(unused)]
 pub enum WindowType {
     Boxcar,
     Triang,
@@ -266,7 +267,7 @@ pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         let (m, needs_trunc) = extend(m, sym);
 
         let fac = Array1::linspace(-1.0, 1.0, m as _)
-            .slice(s![1..-1])
+            .slice(s![1..;-1])
             .mapv(f64::abs);
         let temp = (1.0 - fac.clone()) * fac.mapv(|a| (PI * a).cos())
             + 1.0 / PI * fac.mapv(|a| (PI * a).sin());
