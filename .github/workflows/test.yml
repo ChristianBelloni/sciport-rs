@@ -25,7 +25,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - name: install fortran compiler
-        run: apt install gfortran-13
+        run: sudo apt install -y gfortran-13
       - name: Install python modules
         run: pip3 install scipy pandas numpy
       - name: cargo generate-lockfile
@@ -57,7 +57,7 @@ jobs:
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
       - name: install fortran compiler
-        run: apt install gfortran-13
+        run: sudo apt install -y gfortran-13
       - name: Install python modules
         run: pip3 install scipy pandas numpy
       - name: cargo generate-lockfile
@@ -84,7 +84,7 @@ jobs:
       - name: cargo llvm-cov
         run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
       - name: install fortran compiler
-        run: apt install gfortran-13
+        run: sudo apt install -y gfortran-13
       - name: Install python modules
         run: pip3 install scipy pandas numpy
       - name: Upload to codecov.io
