@@ -1,7 +1,7 @@
-use std::ops::{Div, Mul, Neg};
+use std::ops::{Div, Mul};
 
-use ndarray::{array, concatenate, Array, Array1, ArrayView, ArrayView0, Axis};
-use num::{traits::Pow, Complex, Num, One, Signed, Zero};
+use ndarray::{array, concatenate, Array, Array1, ArrayView, Axis};
+use num::{traits::Pow, Complex, Num, Zero};
 
 use super::{output_type::Zpk, tools::relative_degree};
 

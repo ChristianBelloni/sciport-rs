@@ -13,19 +13,19 @@ fn with_py_test_butter() {
         let kind = rand::thread_rng().gen_range(0..4);
 
         let band_filter = match kind {
-            0 => BandFilter::Lowpass(rand::thread_rng().gen_range((0.0)..(1.0))),
-            1 => BandFilter::Highpass(rand::thread_rng().gen_range((0.0)..(1.0))),
+            0 => BandFilter::Lowpass(rand::thread_rng().gen_range((0.0)..1.0)),
+            1 => BandFilter::Highpass(rand::thread_rng().gen_range((0.0)..1.0)),
             2 => {
-                let x1: f64 = rand::thread_rng().gen_range((0.0)..(1.0));
-                let x2: f64 = rand::thread_rng().gen_range((0.0)..(1.0));
+                let x1: f64 = rand::thread_rng().gen_range((0.0)..1.0);
+                let x2: f64 = rand::thread_rng().gen_range((0.0)..1.0);
 
                 let low = x1.min(x2);
                 let high = x1.max(x2);
                 BandFilter::Bandpass { low, high }
             }
             3 => {
-                let x1: f64 = rand::thread_rng().gen_range((0.0)..(1.0));
-                let x2: f64 = rand::thread_rng().gen_range((0.0)..(1.0));
+                let x1: f64 = rand::thread_rng().gen_range((0.0)..1.0);
+                let x2: f64 = rand::thread_rng().gen_range((0.0)..1.0);
 
                 let low = x1.min(x2);
                 let high = x1.max(x2);
@@ -37,7 +37,7 @@ fn with_py_test_butter() {
         let analog = match rand::thread_rng().gen_range(0..2) {
             0 => Analog::True,
             1 => Analog::False {
-                fs: thread_rng().gen_range((3.0)..(15.0)),
+                fs: thread_rng().gen_range((3.0)..15.0),
             },
             _ => unreachable!(),
         };

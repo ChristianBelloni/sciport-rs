@@ -65,9 +65,7 @@ impl AlmostEq for f64 {
 }
 
 pub fn almost_eq<T: AlmostEq + Debug>(lhs: &T, rhs: &T, tol: f64) -> bool {
-    let res = lhs.almost_eq(rhs, tol);
-
-    res
+    lhs.almost_eq(rhs, tol)
 }
 
 pub fn check_zpk_filter(rust: Zpk, python: (Vec<Complex64>, Vec<Complex64>, f64)) -> bool {
@@ -87,7 +85,7 @@ pub fn check_zpk_filter(rust: Zpk, python: (Vec<Complex64>, Vec<Complex64>, f64)
 #[macro_export]
 macro_rules! assert_almost_eq {
     ($i1:expr, $i2:expr, $tol:expr) => {
-        assert!(crate::almost_eq(&$i1, &$i2, $tol));
+        assert!($crate::almost_eq(&$i1, &$i2, $tol));
     };
 
     ($i1: expr, $i2:expr) => {

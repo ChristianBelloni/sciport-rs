@@ -20,8 +20,8 @@ fn with_py_fuzzy_lp2lp_zpk() {
         let input2 = input.clone();
         let rust = lp2lp_zpk(input.clone(), wo);
 
-        let z_formatted = format!("{}", input2.z).replace("i", "j");
-        let p_formatted = format!("{}", input2.p).replace("i", "j");
+        let z_formatted = format!("{}", input2.z).replace('i', "j");
+        let p_formatted = format!("{}", input2.p).replace('i', "j");
 
         let py_code = format!(
             "signal.lp2lp_zpk({z_formatted},{p_formatted},{}, wo={wo})",
@@ -44,8 +44,8 @@ fn with_py_fuzzy_lp2hp_zpk() {
         let input2 = input.clone();
         let rust = lp2hp_zpk(input.clone(), wo);
 
-        let z_formatted = format!("{}", input2.z).replace("i", "j");
-        let p_formatted = format!("{}", input2.p).replace("i", "j");
+        let z_formatted = format!("{}", input2.z).replace('i', "j");
+        let p_formatted = format!("{}", input2.p).replace('i', "j");
 
         let py_code = format!(
             "signal.lp2hp_zpk({z_formatted},{p_formatted},{}, wo={wo})",
@@ -69,8 +69,8 @@ fn with_py_fuzzy_lp2bp_zpk() {
         let input2 = input.clone();
         let rust = lp2bp_zpk(input.clone(), wo, bw);
 
-        let z_formatted = format!("{}", input2.z).replace("i", "j");
-        let p_formatted = format!("{}", input2.p).replace("i", "j");
+        let z_formatted = format!("{}", input2.z).replace('i', "j");
+        let p_formatted = format!("{}", input2.p).replace('i', "j");
 
         let py_code = format!(
             "signal.lp2bp_zpk({z_formatted},{p_formatted},{}, wo={wo}, bw={bw})",
@@ -94,8 +94,8 @@ fn with_py_fuzzy_lp2bs_zpk() {
         let wo = rng.gen_range(0.0..1.0);
         let bw = rng.gen_range(0.0..1.0);
 
-        let z_formatted = format!("{}", input.z).replace("i", "j");
-        let p_formatted = format!("{}", input.p).replace("i", "j");
+        let z_formatted = format!("{}", input.z).replace('i', "j");
+        let p_formatted = format!("{}", input.p).replace('i', "j");
         let k = input.k;
 
         let py_code = format!(

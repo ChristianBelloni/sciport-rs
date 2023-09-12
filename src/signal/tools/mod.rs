@@ -93,7 +93,7 @@ pub fn newton(
     for _ in 0..maxiter {
         let fval = f(x0);
 
-        if fval == 0.0.into() {}
+        //if fval == 0.0 {}
 
         let fder = fp(x0);
         let newton_step = fval / fder;
