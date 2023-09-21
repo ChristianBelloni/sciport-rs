@@ -16,8 +16,8 @@ pub fn truncate(w: impl Into<Array1<f64>>, needs_trunc: bool) -> Array1<f64> {
     fn inner(w: Array1<f64>, needed: bool) -> Array1<f64> {
         if needed {
             let mut inner = w.to_vec();
-            inner.truncate(inner.len() - 1);
-            Array1::from_shape_vec(inner.len(), inner).unwrap()
+            inner.remove(inner.len() - 1);
+            inner.into()
         } else {
             w
         }
