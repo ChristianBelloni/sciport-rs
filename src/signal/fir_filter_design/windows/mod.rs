@@ -3,7 +3,7 @@ mod utils;
 
 pub use barthann::*;
 use ndarray::{array, s, Array1};
-use std::f64::consts::PI;
+use std::{f64::consts::PI, ops::Div};
 pub(crate) use utils::*;
 
 use crate::if_len_guard;
@@ -107,23 +107,23 @@ pub fn triang(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 
         let (m, needs_trunc) = extend(m, sym);
 
-        let n = 1..((m + 1) / 2 + 1);
-        let n = n.map(|a| a as _).collect::<Array1<f64>>();
+        let n = Array1::range(1.0, (m as f64 + 1.0).div(2.0).floor() + 1.0, 1.0);
 
         let w = if m % 2 == 0 {
             let w = (2.0 * n - 1.0) / (m as f64);
-            let reversed = w.slice(s![..;-1]);
+            let mut reversed = w.to_vec();
+            reversed.reverse();
             let mut w = w.to_vec();
-            let reversed = reversed.to_vec();
             w.extend(&reversed);
-            Array1::from(w)
+            w
         } else {
             let w = 2.0 * n / ((m as f64) + 1.0);
-            let reversed = w.slice(s![-2..;-2]);
+            let mut reversed = w.to_vec();
+            reversed.remove(reversed.len() - 1);
+            reversed.reverse();
             let mut w = w.to_vec();
-            let reversed = reversed.to_vec();
             w.extend(&reversed);
-            Array1::from(w)
+            w
         };
 
         truncate(w, needs_trunc)
@@ -259,7 +259,7 @@ pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     }
     _parzen(m, sym.into().unwrap_or(true))
 }
-
+#[allow(clippy::reversed_empty_ranges)]
 pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _bohman(m: u64, sym: bool) -> Array1<f64> {
         if_len_guard!(m);
@@ -267,7 +267,7 @@ pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         let (m, needs_trunc) = extend(m, sym);
 
         let fac = Array1::linspace(-1.0, 1.0, m as _)
-            .slice(s![1..;-1])
+            .slice(s![1..-1])
             .mapv(f64::abs);
         let temp = (1.0 - fac.clone()) * fac.mapv(|a| (PI * a).cos())
             + 1.0 / PI * fac.mapv(|a| (PI * a).sin());
@@ -301,9 +301,9 @@ pub fn cosine(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         if_len_guard!(m);
         let (m, needs_trunc) = extend(m, sym);
 
-        let w = Array1::range(0.0, m as _, 1.0);
+        let w = Array1::range(0.0, m as _, 1.0) + 0.5;
         let m = m as f64;
-        let w = (PI / m * w + 0.5).mapv(f64::sin);
+        let w = (PI / m * w).mapv(f64::sin);
 
         truncate(w, needs_trunc)
     }
@@ -323,7 +323,7 @@ pub fn exponential(
         let center = if let Some(center) = center {
             center
         } else {
-            (m as f64) - 1.0 / 2.0
+            ((m as f64) - 1.0) / 2.0
         };
 
         let n = Array1::range(0.0, m as f64, 1.0);
@@ -362,7 +362,7 @@ pub fn tukey(m: u64, alpha: impl Into<Option<f64>>, sym: impl Into<Option<bool>>
 
         let w1 =
             0.5 * (1.0 + (PI * (-1.0 + 2.0 * n1.to_owned() / alpha / (m - 1.0))).mapv(f64::cos));
-        let w2 = Array1::<f64>::zeros((n2.len(),));
+        let w2 = Array1::<f64>::ones((n2.len(),));
         let w3 = 0.5
             * (1.0
                 + (PI * (-2.0 / alpha + 1.0 + 2.0 * n3.to_owned() / alpha / (m - 1.0)))
