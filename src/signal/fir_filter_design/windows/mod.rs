@@ -259,7 +259,7 @@ pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     }
     _parzen(m, sym.into().unwrap_or(true))
 }
-
+#[allow(clippy::reversed_empty_ranges)]
 pub fn bohman(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
     fn _bohman(m: u64, sym: bool) -> Array1<f64> {
         if_len_guard!(m);
