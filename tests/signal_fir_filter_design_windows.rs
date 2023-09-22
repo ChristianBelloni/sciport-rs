@@ -1,4 +1,3 @@
-#![feature(const_option)]
 use lazy_static::lazy_static;
 use rand::Rng;
 mod common;
