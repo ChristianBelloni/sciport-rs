@@ -18,7 +18,9 @@ ndarray = { version = "0.15.6", features = ["rayon"] }
 numpy = "0.19.0"
 [dev-dependencies]
 pyo3 = { version = "0.19.1", features = ["full", "auto-initialize"] }
+ndarray = { version = "0.15.6", features = ["rayon", "approx"] }
 rand = "0.8.5"
+approx = "0.5"
 lazy_static = "1.4.0"
 # blas-src = { version = "0.8.0", default-features = false, features = ["accelerate"] }
 

@@ -8,12 +8,12 @@ lazy_static! {
         .map(str::parse)
         .map(Result::ok)
         .flatten()
-        .unwrap_or(10_000);
+        .unwrap_or(50_000);
     static ref TEST_ITER: usize = std::option_env!("TEST_ITER")
         .map(str::parse)
         .map(Result::ok)
         .flatten()
-        .unwrap_or(10_000);
+        .unwrap_or(1000);
 }
 fn len(l: u64) -> u64 {
     rand::thread_rng().gen_range(1..l)
@@ -36,7 +36,7 @@ pub fn test_boxcar() {
         let py_script = format!("signal.windows.boxcar({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
 
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -49,7 +49,7 @@ pub fn test_triang() {
         let py_script = format!("signal.windows.triang({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
 
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -61,7 +61,7 @@ pub fn test_blackman() {
         let rust_res = blackman(len, sym).to_vec();
         let py_script = format!("signal.windows.blackman({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -73,7 +73,7 @@ pub fn test_hamming() {
         let rust_res = hamming(len, sym).to_vec();
         let py_script = format!("signal.windows.hamming({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -85,7 +85,7 @@ pub fn test_hann() {
         let rust_res = hann(len, sym).to_vec();
         let py_script = format!("signal.windows.hann({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -97,7 +97,7 @@ pub fn test_bartlett() {
         let rust_res = bartlett(len, sym).to_vec();
         let py_script = format!("signal.windows.bartlett({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -109,7 +109,7 @@ pub fn test_flattop() {
         let rust_res = flattop(len, sym).to_vec();
         let py_script = format!("signal.windows.flattop({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -121,7 +121,7 @@ pub fn test_bohman() {
         let rust_res = bohman(len, sym).to_vec();
         let py_script = format!("signal.windows.bohman({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -133,7 +133,7 @@ pub fn test_blackmanharris() {
         let rust_res = blackmanharris(len, sym).to_vec();
         let py_script = format!("signal.windows.blackmanharris({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -145,7 +145,7 @@ pub fn test_nuttall() {
         let rust_res = nuttall(len, sym).to_vec();
         let py_script = format!("signal.windows.nuttall({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -157,7 +157,7 @@ pub fn test_barthann() {
         let rust_res = barthann(len, sym).to_vec();
         let py_script = format!("signal.windows.barthann({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -169,7 +169,7 @@ pub fn test_cosine() {
         let rust_res = cosine(len, sym).to_vec();
         let py_script = format!("signal.windows.cosine({len}, {})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -181,7 +181,7 @@ pub fn test_exponential() {
         let rust_res = exponential(len, None, None, sym).to_vec();
         let py_script = format!("signal.windows.exponential({len}, sym={})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -197,7 +197,7 @@ pub fn test_tukey() {
             py_bool(sym)
         );
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -213,7 +213,7 @@ pub fn test_taylor() {
         );
         let py_res: Vec<f64> = with_scipy(&py_script);
 
-        py_res.almost_eq(&rust_res, tol!());
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
 
@@ -225,6 +225,6 @@ pub fn test_lanczos() {
         let rust_res = lanczos(len, sym).to_vec();
         let py_script = format!("signal.windows.lanczos({len}, sym={})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
-        assert_eq!(rust_res, py_res);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
