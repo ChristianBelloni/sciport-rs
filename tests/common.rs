@@ -53,6 +53,18 @@ impl AlmostEq for Vec<Complex64> {
     }
 }
 
+impl AlmostEq for Vec<f64> {
+    fn almost_eq(&self, rhs: &Self, tol: f64) -> bool {
+        for (i, (l, r)) in self.iter().zip(rhs.iter()).enumerate() {
+            if !almost_eq(l, r, tol) {
+                eprintln!("idx: {} left {}, right {}", i, l, r);
+                return false;
+            }
+        }
+        true
+    }
+}
+
 impl AlmostEq for f64 {
     fn almost_eq(&self, rhs: &Self, tol: f64) -> bool {
         let err = (*self - *rhs).abs();
