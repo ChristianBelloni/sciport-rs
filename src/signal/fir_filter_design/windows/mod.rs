@@ -244,18 +244,14 @@ pub fn parzen(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         let (m, needs_trunc) = extend(m, sym);
         let m = m as f64;
         let n = Array1::range(-(m - 1.0) / 2.0, (m - 1.0) / 2.0 + 0.5, 1.0);
-
         let na = extract(n.map(|&v| v < -(m - 1.0) / 4.0), n.clone());
         let nb = extract(n.map(|&v| v.abs() <= (m - 1.0) / 4.0), n);
-
-        let wa = (2.0 * (1.0 - na.mapv(f64::abs) / (m / 2.0))).mapv(|v| v.powi(3));
-
-        let wb = (1.0 - 6.0 * (nb.mapv(f64::abs) / (m / 2.0))).mapv(|v| v.powi(2))
-            + (6.0 * (nb.mapv(f64::abs) / (m / 2.0))).mapv(|v| v.powi(3));
-
+        let wa = 2.0 * (1.0 - na.mapv(f64::abs) / (m / 2.0)).mapv(|v| v.powi(3));
+        let wb = 1.0 - 6.0 * (nb.mapv(f64::abs) / (m / 2.0)).mapv(|v| v.powi(2))
+            + 6.0 * (nb.mapv(f64::abs) / (m / 2.0)).mapv(|v| v.powi(3));
         let mut w = wa.clone().to_vec();
         w.extend(&wb);
-        w.extend(wa.slice(s![..;-1]));
+        w.extend(wa.to_vec().into_iter().rev());
 
         truncate(w, needs_trunc)
     }

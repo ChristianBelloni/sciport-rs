@@ -114,6 +114,18 @@ pub fn test_flattop() {
 }
 
 #[test]
+pub fn test_parzen() {
+    for _ in 0..*TEST_ITER {
+        let len = 10;
+        let sym = rand::random();
+        let rust_res = parzen(len, sym).to_vec();
+        let py_script = format!("signal.windows.parzen({len}, {})", py_bool(sym));
+        let py_res: Vec<f64> = with_scipy(&py_script);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
+    }
+}
+
+#[test]
 pub fn test_bohman() {
     for _ in 0..*TEST_ITER {
         let len = len(*TEST_LEN);
