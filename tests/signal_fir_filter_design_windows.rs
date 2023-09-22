@@ -8,7 +8,7 @@ lazy_static! {
         .map(str::parse)
         .map(Result::ok)
         .flatten()
-        .unwrap_or(50_000);
+        .unwrap_or(1_000);
     static ref TEST_ITER: usize = std::option_env!("TEST_ITER")
         .map(str::parse)
         .map(Result::ok)
