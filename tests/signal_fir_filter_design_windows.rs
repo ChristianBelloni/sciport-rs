@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use rand::Rng;
 mod common;
-use common::{with_scipy, AlmostEq};
+use common::with_scipy;
 use sciport_rs::signal::windows::*;
 lazy_static! {
     static ref TEST_LEN: u64 = std::option_env!("TEST_LEN")
@@ -238,5 +238,63 @@ pub fn test_lanczos() {
         let py_script = format!("signal.windows.lanczos({len}, sym={})", py_bool(sym));
         let py_res: Vec<f64> = with_scipy(&py_script);
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
+    }
+}
+
+#[test]
+pub fn test_kaiser() {
+    for _ in 0..*TEST_ITER {
+        let len = len(*TEST_LEN);
+        let sym = rand::random();
+        let beta = rand::thread_rng().gen_range(2.0..30.0);
+        let rust_res = kaiser(len, beta, sym).to_vec();
+        let py_script = format!(
+            "signal.windows.kaiser({len}, beta={beta}, sym={})",
+            py_bool(sym)
+        );
+        let py_res: Vec<f64> = with_scipy(&py_script);
+        approx::assert_relative_eq!(
+            rust_res.as_slice(),
+            py_res.as_slice(),
+            epsilon = 0.00000000000001
+        );
+    }
+}
+
+#[test]
+pub fn test_kaiser_bessel_derived() {
+    for _ in 0..*TEST_ITER {
+        let len = len(*TEST_LEN);
+        let len = if len % 2 == 1 { len + 1 } else { len };
+        let sym = true;
+        let beta = rand::thread_rng().gen_range(2.0..30.0);
+        let rust_res = kaiser_bessel_derived(len, beta, sym).to_vec();
+        let py_script = format!(
+            "signal.windows.kaiser_bessel_derived({len}, beta={beta}, sym={})",
+            py_bool(sym)
+        );
+        let py_res: Vec<f64> = with_scipy(&py_script);
+        approx::assert_relative_eq!(
+            rust_res.as_slice(),
+            py_res.as_slice(),
+            epsilon = 0.00000000000001
+        );
+    }
+}
+
+#[test]
+pub fn test_gaussian() {
+    for _ in 0..*TEST_ITER {
+        let len = len(*TEST_LEN);
+        let len = if len % 2 == 1 { len + 1 } else { len };
+        let sym = true;
+        let std_dev = rand::thread_rng().gen_range(2.0..30.0);
+        let rust_res = gaussian(len, std_dev, sym).to_vec();
+        let py_script = format!(
+            "signal.windows.gaussian({len}, {std_dev}, sym={})",
+            py_bool(sym)
+        );
+        let py_res: Vec<f64> = with_scipy(&py_script);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(),);
     }
 }

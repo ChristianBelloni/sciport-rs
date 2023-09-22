@@ -111,8 +111,9 @@ where
 {
     Python::with_gil(|gil| {
         let signal = gil.import("scipy.signal").unwrap();
+        let special = gil.import("scipy.special").unwrap();
 
-        let globals = [("signal", signal)].into_py_dict(gil);
+        let globals = [("signal", signal), ("special", special)].into_py_dict(gil);
 
         let res = gil.eval(cl, globals.into(), None).unwrap();
 

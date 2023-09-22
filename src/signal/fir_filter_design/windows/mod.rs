@@ -79,7 +79,7 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::Exponential { center, tau } => exponential(m, center, tau, sym),
         WindowType::Tukey { alpha } => tukey(m, alpha, sym),
         WindowType::Taylor { nbar, sll, norm } => taylor(m, nbar, sll, norm, sym),
-        WindowType::Lanczos => todo!(),
+        WindowType::Lanczos => lanczos(m, sym),
         WindowType::Kaiser { beta } => todo!(),
         WindowType::KaiserBesselDerived { beta } => todo!(),
         WindowType::Gaussian { std_dev } => todo!(),
@@ -477,4 +477,71 @@ pub fn lanczos(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
         truncate(w, needs_trunc)
     }
     _lanczos(m, sym.into().unwrap_or(true))
+}
+
+pub fn kaiser(m: u64, beta: f64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _kaiser(m: u64, beta: f64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+
+        let (m, needs_trunc) = extend(m, sym);
+
+        let n = Array1::range(0.0, m as f64, 1.0);
+        let alpha = (m as f64 - 1.0) / 2.0;
+        let l = beta * (1.0 - ((n - alpha) / alpha).mapv(|a| a.powi(2))).mapv(|a| a.sqrt());
+        let l = crate::special::i0(l).unwrap();
+        let r = crate::special::i0(array![beta]).unwrap();
+
+        let w = l / r;
+        let w = w.mapv(|a| a.norm());
+
+        truncate(w, needs_trunc)
+    }
+    _kaiser(m, beta, sym.into().unwrap_or(true))
+}
+
+pub fn kaiser_bessel_derived(m: u64, beta: f64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _kaiser_bessel_derived(m: u64, beta: f64, sym: bool) -> Array1<f64> {
+        if m < 1 {
+            return array![];
+        } else if m % 2 == 1 {
+            panic!("Kaiser-Bessel Derived windows are only defined for even number of points");
+        }
+
+        let mut kaiser_window =
+            kaiser(((m as f64 / 2.0).floor() + 1.0) as u64, beta, true).to_vec();
+        let mut last_sum = 0.0;
+        for e in kaiser_window.iter_mut() {
+            *e += last_sum;
+            last_sum = *e;
+        }
+        let half_window = kaiser_window
+            .iter()
+            .enumerate()
+            .take_while(|(i, _)| *i != kaiser_window.len() - 1)
+            .map(|(_, a)| *a)
+            .map(|a| (a / kaiser_window.last().unwrap()).sqrt());
+
+        let mut w = half_window.collect::<Vec<_>>();
+        let reversed: Vec<f64> = w.iter().copied().rev().collect();
+        w.extend(reversed);
+
+        w.into()
+    }
+    _kaiser_bessel_derived(m, beta, sym.into().unwrap_or(true))
+}
+
+pub fn gaussian(m: u64, std_dev: f64, sym: impl Into<Option<bool>>) -> Array1<f64> {
+    fn _gaussian(m: u64, std_dev: f64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+        let (m, needs_trunc) = extend(m, sym);
+
+        let n = Array1::range(0.0, m as _, 1.0) - (m as f64 - 1.0) / 2.0;
+        let sig2 = 2.0 * std_dev * std_dev;
+
+        let w = (-n.mapv(|a| a.powi(2)) / sig2).mapv(f64::exp);
+
+        truncate(w, needs_trunc)
+    }
+
+    _gaussian(m, std_dev, sym.into().unwrap_or(true))
 }
