@@ -24,4 +24,5 @@ lazy_static = "1.4.0"
 
 
 [features]
-"blas" = ["ndarray/blas"]
+#"blas" = ["ndarray/blas"]
+
