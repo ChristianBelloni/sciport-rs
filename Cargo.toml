@@ -22,5 +22,6 @@ rand = "0.8.5"
 lazy_static = "1.4.0"
 blas-src = { version = "0.8.0", default-features = false, features = ["accelerate"] }
 
+
 [features]
 "blas" = ["ndarray/blas"]
