@@ -187,27 +187,32 @@ where
             res.root = new_guess;
             res.error = new_y;
 
+            if new_y.is_infinite(){
+                res.flag = RootScalarResultFlag::Fail("Function evaluated to be infinite".to_string());
+                break
+            }
+
             if let Some(ftol) = self.ftol{
                 if new_y.abs() < ftol {
                     res.flag.ftol_reach();
-                    break;
                 }
             }
             if let Some(last_guess) = last_guess{
                 if let Some(rtol) = self.rtol{
                     if (new_guess-last_guess).abs() < new_guess * rtol{
                         res.flag.rtol_reach();
-                        break;
                     }
                 }
     
                 if let Some(xtol) = self.xtol{
                     if (last_guess-new_guess).abs() < xtol{
                         res.flag.xtol_reach();
-                        break;
                     }
                 }
             }
+            
+            if res.flag.sucess(){break;}
+
             if let Some(maxiter) = self.maxiter{
                 if res.iterations >= maxiter{
                     res.flag = RootScalarResultFlag::Fail("Fail, max iterations reached".to_string());
