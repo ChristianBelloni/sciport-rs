@@ -545,6 +545,23 @@ pub fn gaussian(m: u64, std_dev: f64, sym: impl Into<Option<bool>>) -> Array1<f6
     _gaussian(m, std_dev, sym.into().unwrap_or(true))
 }
 
+pub fn general_gaussian(
+    m: u64,
+    power: f64,
+    width: f64,
+    sym: impl Into<Option<bool>>,
+) -> Array1<f64> {
+    fn _general_gaussian(m: u64, power: f64, width: f64, sym: bool) -> Array1<f64> {
+        if_len_guard!(m);
+        let (m, needs_trunc) = extend(m, sym);
+
+        let n = Array1::range(0.0, m as _, 1.0) - (m as f64 - 1.0) / 2.0;
+        let w = (-0.5 * (n / width).mapv(f64::abs).mapv(|a| a.powf(2.0 * power))).mapv(f64::exp);
+        truncate(w, needs_trunc)
+    }
+    _general_gaussian(m, power, width, sym.into().unwrap_or(true))
+}
+
 pub fn len_guards(m: u64) -> bool {
     m <= 1
 }
