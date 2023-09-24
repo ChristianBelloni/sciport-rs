@@ -1,7 +1,3 @@
-use ndarray::{array, stack, Array, Array1, Axis, IxDyn};
-
-use crate::{signal::band_filter::BandFilter, special::sinc};
-
 pub fn kaiser_beta(input: f64) -> f64 {
     if input > 50.0 {
         0.1102 * (input - 8.7)
@@ -31,27 +27,3 @@ pub fn kaiserord(ripple: f64, width: f64) -> (i64, f64) {
 
     (numtaps, beta)
 }
-
-pub enum FirwinWindow {
-    Hamming,
-}
-
-// fn is_valid_cutoff(cutoff: &FirwinCutoff) -> bool {
-//     match cutoff {
-//         FirwinCutoff::Freq(a) => *a > 0.0 && *a < 1.0,
-//         FirwinCutoff::BandEdges(a) => {
-//             let mut last = 0.0;
-//             for a in a.iter() {
-//                 if !(*a > 0.0 && *a < 1.0) {
-//                     return false;
-//                 }
-//
-//                 if *a < last {
-//                     return false;
-//                 }
-//                 last = *a;
-//             }
-//             return true;
-//         }
-//     }
-// }

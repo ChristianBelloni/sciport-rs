@@ -1,8 +1,6 @@
-mod utils;
-
-use ndarray::{array, s, Array1, NewAxis};
+use ndarray::Array1;
+use ndarray::{array, s, NewAxis};
 use std::{f64::consts::PI, ops::Div};
-pub(crate) use utils::*;
 
 use crate::{if_len_guard, special::sinc};
 
@@ -58,7 +56,8 @@ pub enum WindowType {
     },
 }
 
-pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>) {
+#[allow(unused)]
+pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>) -> Array1<f64> {
     let fftbins = fftbins.into().unwrap_or(true);
     let m = nx;
     let sym = !fftbins;
@@ -87,7 +86,7 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::GeneralGaussian { power, width } => todo!(),
         WindowType::Dpss { half_bandwidth } => todo!(),
         WindowType::Chebwin { attenuation } => todo!(),
-    };
+    }
 }
 
 pub fn boxcar(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
@@ -403,7 +402,7 @@ pub fn taylor(
     norm: impl Into<Option<bool>>,
     sym: impl Into<Option<bool>>,
 ) -> Array1<f64> {
-    fn _taylor(m: u64, nbar: u64, sll: f64, norm: bool, sym: bool) -> Array1<f64> {
+    fn _taylor(m: u64, nbar: u64, sll: f64, _norm: bool, sym: bool) -> Array1<f64> {
         if_len_guard!(m);
         let (m, needs_trunc) = extend(m, sym);
 
@@ -500,7 +499,7 @@ pub fn kaiser(m: u64, beta: f64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 }
 
 pub fn kaiser_bessel_derived(m: u64, beta: f64, sym: impl Into<Option<bool>>) -> Array1<f64> {
-    fn _kaiser_bessel_derived(m: u64, beta: f64, sym: bool) -> Array1<f64> {
+    fn _kaiser_bessel_derived(m: u64, beta: f64, _sym: bool) -> Array1<f64> {
         if m < 1 {
             return array![];
         } else if m % 2 == 1 {
@@ -544,4 +543,38 @@ pub fn gaussian(m: u64, std_dev: f64, sym: impl Into<Option<bool>>) -> Array1<f6
     }
 
     _gaussian(m, std_dev, sym.into().unwrap_or(true))
+}
+
+pub fn len_guards(m: u64) -> bool {
+    m <= 1
+}
+
+pub fn extend(m: u64, sym: bool) -> (u64, bool) {
+    if !sym {
+        (m + 1, true)
+    } else {
+        (m, false)
+    }
+}
+
+pub fn truncate(w: impl Into<Array1<f64>>, needs_trunc: bool) -> Array1<f64> {
+    fn inner(w: Array1<f64>, needed: bool) -> Array1<f64> {
+        if needed {
+            let mut inner = w.to_vec();
+            inner.remove(inner.len() - 1);
+            inner.into()
+        } else {
+            w
+        }
+    }
+    inner(w.into(), needs_trunc)
+}
+
+#[macro_export]
+macro_rules! if_len_guard {
+    ($m:ident) => {
+        if len_guards($m) {
+            return Array1::ones(($m as usize,));
+        }
+    };
 }

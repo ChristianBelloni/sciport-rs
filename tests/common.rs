@@ -80,6 +80,7 @@ pub fn almost_eq<T: AlmostEq + Debug>(lhs: &T, rhs: &T, tol: f64) -> bool {
     lhs.almost_eq(rhs, tol)
 }
 
+#[allow(unused)]
 pub fn check_zpk_filter(rust: Zpk, python: (Vec<Complex64>, Vec<Complex64>, f64)) -> bool {
     let Zpk { z, p, k } = rust;
     let (py_z, py_p, py_k) = python;

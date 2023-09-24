@@ -298,3 +298,21 @@ pub fn test_gaussian() {
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(),);
     }
 }
+
+#[test]
+pub fn test_general_gaussian() {
+    for _ in 0..*TEST_ITER {
+        let len = len(*TEST_LEN);
+        let len = if len % 2 == 1 { len + 1 } else { len };
+        let sym = true;
+        let p = rand::thread_rng().gen_range(0.0..1.0);
+        let sig = rand::thread_rng().gen_range(2.0..30.0);
+        let rust_res = general_gaussian(len, p, sig, sym).to_vec();
+        let py_script = format!(
+            "signal.windows.general_gaussian({len}, {p}, {sig}, sym={})",
+            py_bool(sym)
+        );
+        let py_res: Vec<f64> = with_scipy(&py_script);
+        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(),);
+    }
+}

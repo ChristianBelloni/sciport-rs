@@ -53,6 +53,17 @@ impl BandFilter {
             }
         }
     }
+
+    pub fn pass_zero(&self) -> bool {
+        match self {
+            BandFilter::Bandpass { low: _, high: _ } | BandFilter::Highpass(_) => false,
+            BandFilter::Bandstop { low: _, high: _ } | BandFilter::Lowpass(_) => true,
+        }
+    }
+
+    pub fn pass_nyquist(&self, pass_zero: bool) -> bool {
+        ((self.size() & 1) == 1) ^ pass_zero
+    }
 }
 
 impl<T: Num + Copy> Mul<T> for BandFilter
