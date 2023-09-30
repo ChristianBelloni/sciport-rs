@@ -8,6 +8,12 @@ use sciport_rs::optimize::root_scalar::{
 };
 use sciport_rs::optimize::OptimizeCriteria;
 
+fn print_divider(s: String) {
+    println!("{}", "-".to_string().repeat(64));
+    println!("| {:^60} |", s);
+    println!("{}", "-".to_string().repeat(64));
+}
+
 #[test]
 fn root_scalar() {
     let methods = [
@@ -87,7 +93,7 @@ fn root_scalar() {
     let fun = Rc::new(|x: f64| x.sin());
     let x0 = 1.0;
     let criteria = Some(
-        optimize::criteria::OptimizeCriteria::empty()
+        OptimizeCriteria::empty()
             .set_fltol(Some(1e-9f64))
             .set_maxiter(Some(5000)),
     );
@@ -99,7 +105,7 @@ fn root_scalar() {
     let fun = Rc::new(|x: Complex64| x.sin());
     let x0 = Complex64::new(0.5, 0.3);
     let criteria = Some(
-        optimize::criteria::OptimizeCriteria::empty()
+        OptimizeCriteria::empty()
             .set_fltol(Some(1e-9f64))
             .set_maxiter(Some(5000)),
     );
