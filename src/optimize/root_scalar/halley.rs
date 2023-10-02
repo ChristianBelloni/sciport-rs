@@ -1,6 +1,6 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
-use crate::optimize::*;
+
 
 pub fn halley_method<C, M>(
     fun: Rc<dyn Fn(C) -> C>,

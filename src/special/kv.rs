@@ -46,8 +46,8 @@ mod tests {
     #[test]
     fn test_kv() {
         let c1 = Complex64::new(1000.0, 0.0);
-        let res = kv(-3.5, c1);
-        let res2 = kve(0.0, 1.0.into());
+        let _res = kv(-3.5, c1);
+        let _res2 = kve(0.0, 1.0.into());
         let res3 = kve(3.5, 1.0 / Complex64::new(1.2, 0.3));
         println!("{res3}");
     }
