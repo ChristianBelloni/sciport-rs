@@ -1,6 +1,6 @@
-use crate::signal::{BandFilter, FirwinWindow};
+use crate::signal::BandFilter;
 use crate::special::sinc;
-use ndarray::{Array, Array1, IxDyn};
+use ndarray::Array1;
 
 use super::windows::{get_window, WindowType};
 use super::{kaiser_atten, kaiser_beta};

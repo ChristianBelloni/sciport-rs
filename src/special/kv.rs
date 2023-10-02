@@ -19,7 +19,7 @@ pub fn kv(mut v: f64, mut z: Complex<f64>) -> Complex<f64> {
     if res.is_err() {
         println!("{v} {z}");
     }
-    
+
     res.unwrap()
 }
 
