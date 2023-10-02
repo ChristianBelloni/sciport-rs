@@ -88,7 +88,7 @@ pub fn check_zpk_filter(rust: Zpk, python: (Vec<Complex64>, Vec<Complex64>, f64)
     let res = almost_eq(&py_z, &z.to_vec(), tol!())
         && almost_eq(&py_p, &p.to_vec(), tol!())
         && almost_eq(&py_k, &k, tol!());
-    if !res && false {
+    if false {
         println!("rust {z:#?} {p:#?} {k:#?}");
         println!("python {py_z:#?} {py_p:#?} {py_k:#?}");
     }
