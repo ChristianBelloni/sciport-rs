@@ -6,13 +6,11 @@ use sciport_rs::signal::windows::*;
 lazy_static! {
     static ref TEST_LEN: u64 = std::option_env!("TEST_LEN")
         .map(str::parse)
-        .map(Result::ok)
-        .flatten()
+        .and_then(Result::ok)
         .unwrap_or(1_000);
     static ref TEST_ITER: usize = std::option_env!("TEST_ITER")
         .map(str::parse)
-        .map(Result::ok)
-        .flatten()
+        .and_then(Result::ok)
         .unwrap_or(1000);
 }
 fn len(l: u64) -> u64 {

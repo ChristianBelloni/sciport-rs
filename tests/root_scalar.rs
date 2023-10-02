@@ -38,7 +38,7 @@ fn root_scalar() {
         let res = solve_from_bracket(
             fun.clone(),
             &bracket_method,
-            bracket.clone(),
+            bracket,
             criteria.clone(),
         );
         println!("{}", res);
