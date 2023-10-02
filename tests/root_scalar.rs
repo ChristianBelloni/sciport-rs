@@ -35,12 +35,7 @@ fn root_scalar() {
 
     for bracket_method in methods {
         print_divider(format!("{:?}", bracket_method));
-        let res = solve_from_bracket(
-            fun.clone(),
-            &bracket_method,
-            bracket,
-            criteria.clone(),
-        );
+        let res = solve_from_bracket(fun.clone(), &bracket_method, bracket, criteria.clone());
         println!("{}", res);
     }
 

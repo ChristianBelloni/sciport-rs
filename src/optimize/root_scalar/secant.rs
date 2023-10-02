@@ -1,7 +1,6 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
 
-
 pub fn secant_method<C, M>(
     fun: Rc<dyn Fn(C) -> C>,
     x0: C,

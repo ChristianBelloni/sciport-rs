@@ -1,7 +1,6 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
 
-
 pub fn newton_method<C, M>(
     fun: Rc<dyn Fn(C) -> C>,
     dfun: Rc<dyn Fn(C) -> C>,
