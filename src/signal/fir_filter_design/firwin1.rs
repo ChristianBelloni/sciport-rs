@@ -1,6 +1,6 @@
-use crate::signal::BandFilter;
+use crate::signal::{BandFilter, FirwinWindow};
 use crate::special::sinc;
-use ndarray::Array1;
+use ndarray::{Array, Array1, IxDyn};
 
 use super::windows::{get_window, WindowType};
 use super::{kaiser_atten, kaiser_beta};
@@ -83,3 +83,6 @@ pub fn firwin(
 
     h
 }
+
+#[cfg(test)]
+pub mod validate_firwin {}
