@@ -9,12 +9,14 @@ pub mod bracket;
 pub mod fixed_point;
 pub mod halley;
 pub mod newton;
+pub mod polynomial;
 pub mod secant;
 
 pub use bracket::solve_from_bracket;
 pub use fixed_point::fixed_point_method;
 pub use halley::halley_method;
 pub use newton::newton_method;
+pub use polynomial::polynomial_roots;
 pub use secant::secant_method;
 
 struct RootScalarEvaluator<C, M>
