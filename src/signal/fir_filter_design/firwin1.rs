@@ -83,3 +83,6 @@ pub fn firwin(
 
     h
 }
+
+#[cfg(test)]
+pub mod validate_firwin {}

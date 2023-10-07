@@ -64,7 +64,7 @@ where
 /// e.g. the solution with type `Array<f64>` and tolerance metric with type `f64`
 ///
 /// this trait allow all optimizaition solution to be turn into a `Metric`. Implemented for:
-/// ```
+/// ```ignore
 /// f32, f64, Complex32, Complex64, Array1<f32>, Array1<f64>, Array1<Complex32>, Array1<Complex64>
 /// ```
 ///
