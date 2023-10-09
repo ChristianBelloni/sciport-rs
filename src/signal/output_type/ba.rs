@@ -4,7 +4,7 @@ use num::{Complex, Zero};
 
 use crate::signal::tools::poly;
 
-use super::{Ba, Zpk};
+use super::{Ba, Filter, Zpk};
 
 impl From<Zpk> for Ba {
     fn from(value: Zpk) -> Self {
@@ -94,5 +94,17 @@ fn mul_by_scalar(input: &mut [Complex<f64>], scalar: Complex<f64>) {
 fn sub(input: &mut [Complex<f64>], other: &[Complex<f64>]) {
     for (i, item) in other.iter().enumerate() {
         *input.get_mut(i).unwrap() = *input.get(i).unwrap() - item;
+    }
+}
+
+impl Filter for Ba {
+    fn lfilter<D: ndarray::Dimension>(
+        &self,
+        b: ndarray::Array1<f64>,
+        a: ndarray::Array1<f64>,
+        x: ndarray::Array<f64, D>,
+        zi: Option<ndarray::Array<f64, D>>,
+    ) -> Option<ndarray::Array<f64, D>> {
+        todo!()
     }
 }

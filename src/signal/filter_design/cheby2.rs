@@ -57,7 +57,7 @@ pub fn cheb2ap(order: u32, rs: f64) -> Zpk {
         return Zpk {
             z: array![],
             p: array![],
-            k: 2.0,
+            k: 1.0,
         };
     }
 

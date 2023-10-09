@@ -34,6 +34,7 @@ use self::{
 mod convolution;
 mod filter_design;
 mod fir_filter_design;
+mod signal_tools;
 
 //pub use convolution::*;
 pub use filter_design::{bessel, butter, cheby1, cheby2};

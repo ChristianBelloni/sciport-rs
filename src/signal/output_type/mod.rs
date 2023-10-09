@@ -1,4 +1,4 @@
-use ndarray::Array1;
+use ndarray::{Array, Array1, Dimension, IxDyn};
 use num::{complex::Complex64, Complex};
 mod ba;
 mod sos;
@@ -111,3 +111,13 @@ pub struct Ba {
 
 #[derive(Debug, Clone)]
 pub struct Sos {}
+
+pub trait Filter {
+    fn lfilter<D: Dimension>(
+        &self,
+        b: Array1<f64>,
+        a: Array1<f64>,
+        x: Array<f64, D>,
+        zi: Option<Array<f64, D>>,
+    ) -> Option<Array<f64, D>>;
+}

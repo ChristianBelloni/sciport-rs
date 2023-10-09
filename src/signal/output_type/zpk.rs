@@ -1,8 +1,9 @@
+use super::Ba;
 use std::ops::Mul;
 
 use num::{Complex, Num};
 
-use super::Zpk;
+use super::{Filter, Zpk};
 
 impl Zpk {}
 
@@ -25,5 +26,18 @@ where
         self.k = rhs * self.k;
 
         self
+    }
+}
+
+impl Filter for Zpk {
+    fn lfilter<D: ndarray::Dimension>(
+        &self,
+        b: ndarray::Array1<f64>,
+        a: ndarray::Array1<f64>,
+        x: ndarray::Array<f64, D>,
+        zi: Option<ndarray::Array<f64, D>>,
+    ) -> Option<ndarray::Array<f64, D>> {
+        let ba: Ba = self.clone().into();
+        ba.lfilter(b, a, x, zi)
     }
 }
