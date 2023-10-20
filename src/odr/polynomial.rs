@@ -74,6 +74,10 @@ where
     pub fn eval(&self, x: T) -> T {
         self.iter().rev().fold(T::zero(), |acc, &c| acc * x + c)
     }
+    /// evaluate the polynomial at `x` for `x` in `xs`
+    pub fn eval_iter(&self, xs: impl IntoIterator<Item = T>) -> Vec<T> {
+        xs.into_iter().map(|x| self.eval(x)).collect()
+    }
     /// return the multiply of polynomial by `x^p`
     pub fn mul_power(&self, p: usize) -> Self {
         vec![T::zero(); p].iter().chain(self.iter()).collect()

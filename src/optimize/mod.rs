@@ -3,11 +3,13 @@ use std::fmt::Display;
 use std::rc::Rc;
 
 pub mod criteria;
+pub mod least_square;
 pub mod metric;
 pub mod root_scalar;
 pub mod util;
 
 pub use criteria::*;
+pub use least_square::*;
 pub use metric::*;
 
 /// Iterative Optimize
