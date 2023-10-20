@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display};
 use std::ops::{Add, Div, Index, Mul, Sub};
 use std::rc::Rc;
 
+use crate::optimize::least_square;
 use crate::optimize::root_scalar::polynomial::{polynomial_roots, IntoComplex};
 use crate::optimize::util::Espilon;
 use crate::optimize::{IntoMetric, Metric};
@@ -136,6 +137,19 @@ where
         M: Metric,
     {
         polynomial_roots(&self)
+    }
+    /// calculate the polynomial least square curve fit on data `x` and `y`
+    /// see `sciport_rs::optimize::least_square::poly_fit`
+    pub fn poly_fit<'a, Q>(
+        x: impl IntoIterator<Item = &'a T>,
+        y: impl IntoIterator<Item = &'a T>,
+        order: usize,
+    ) -> Result<Self, String>
+    where
+        T: Debug + Display + ComplexField<RealField = Q> + PolynomialCoef + Espilon,
+        Q: ComplexFloat + Scalar + Debug + Espilon,
+    {
+        least_square::poly_fit(x, y, order)
     }
 }
 
