@@ -61,7 +61,11 @@
 //! of mathematical physics. Available functions include airy, elliptic, bessel, gamma, beta,
 //! hypergeometric, parabolic cylinder, mathieu, spheroidal wave, struve, and kelvin.
 //!
+#[allow(unused)]
 pub mod odr;
+#[allow(unused)]
 pub mod optimize;
 pub mod signal;
 pub mod special;
+
+pub(crate) mod tools;

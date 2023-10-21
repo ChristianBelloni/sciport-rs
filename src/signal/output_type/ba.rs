@@ -1,83 +1,16 @@
-use std::cmp::Ordering;
+use ndarray::{Array1, Ix1};
+use num::{Complex, Float, Zero};
 
-use num::{Complex, Zero};
+use crate::signal::{
+    signal_tools::linear_filter,
+    tools::{zpk2ba, Zpk2Ba},
+};
 
-use crate::signal::tools::poly;
+use super::{Filter, GenericBa, GenericZpk, LFilterOutput};
 
-use super::{Ba, Filter, Zpk};
-
-impl From<Zpk> for Ba {
-    fn from(value: Zpk) -> Self {
-        let mut b = poly(value.z.view());
-
-        b.iter_mut().for_each(|a| *a *= value.k);
-
-        let mut a = poly(value.p.view());
-        {
-            let mut pos_z_roots = value
-                .z
-                .iter()
-                .filter(|a| a.im > 0.0)
-                .copied()
-                .collect::<Vec<_>>();
-            let mut neg_z_roots = value
-                .z
-                .iter()
-                .filter(|a| a.im < 0.0)
-                .map(|a| a.conj())
-                .collect::<Vec<_>>();
-
-            if pos_z_roots.len() == neg_z_roots.len() {
-                pos_z_roots.sort_by(|a, b| match a.re.total_cmp(&b.re) {
-                    Ordering::Less => Ordering::Less,
-                    Ordering::Greater => Ordering::Greater,
-                    Ordering::Equal => a.im.total_cmp(&b.im),
-                });
-
-                neg_z_roots.sort_by(|a, b| match a.re.total_cmp(&b.re) {
-                    Ordering::Less => Ordering::Less,
-                    Ordering::Greater => Ordering::Greater,
-                    Ordering::Equal => a.im.total_cmp(&b.im),
-                });
-
-                if pos_z_roots == neg_z_roots {
-                    b.iter_mut().for_each(|a| *a = a.re.into());
-                }
-            }
-        }
-        {
-            let mut pos_p_roots = value
-                .p
-                .iter()
-                .filter(|a| a.im > 0.0)
-                .copied()
-                .collect::<Vec<_>>();
-            let mut neg_p_roots = value
-                .p
-                .iter()
-                .filter(|a| a.im < 0.0)
-                .map(|a| a.conj())
-                .collect::<Vec<_>>();
-
-            if pos_p_roots.len() == neg_p_roots.len() {
-                pos_p_roots.sort_by(|a, b| match a.re.total_cmp(&b.re) {
-                    Ordering::Less => Ordering::Less,
-                    Ordering::Greater => Ordering::Greater,
-                    Ordering::Equal => a.im.total_cmp(&b.im),
-                });
-
-                neg_p_roots.sort_by(|a, b| match a.re.total_cmp(&b.re) {
-                    Ordering::Less => Ordering::Less,
-                    Ordering::Greater => Ordering::Greater,
-                    Ordering::Equal => a.im.total_cmp(&b.im),
-                });
-
-                if pos_p_roots == neg_p_roots {
-                    a.iter_mut().for_each(|a| *a = a.re.into());
-                }
-            }
-        }
-        Self { a, b }
+impl<T: Zpk2Ba> From<GenericZpk<T>> for GenericBa<T> {
+    fn from(value: GenericZpk<T>) -> Self {
+        zpk2ba(value)
     }
 }
 #[allow(unused)]
@@ -97,14 +30,31 @@ fn sub(input: &mut [Complex<f64>], other: &[Complex<f64>]) {
     }
 }
 
-impl Filter for Ba {
-    fn lfilter<D: ndarray::Dimension>(
+impl<T: Float> Filter<T> for GenericBa<T> {
+    fn lfilter(
         &self,
-        b: ndarray::Array1<f64>,
-        a: ndarray::Array1<f64>,
-        x: ndarray::Array<f64, D>,
-        zi: Option<ndarray::Array<f64, D>>,
-    ) -> Option<ndarray::Array<f64, D>> {
-        todo!()
+        x: ndarray::Array1<Complex<T>>,
+        zi: Option<ndarray::Array1<Complex<T>>>,
+    ) -> LFilterOutput<T, Ix1> {
+        let b = self.b.clone();
+        let a = self.a.clone();
+
+        let zi = if let Some(zi) = zi {
+            zi
+        } else {
+            Array1::zeros(b.raw_dim() - 1)
+        };
+
+        if a.len() == 1 {
+            return LFilterOutput {
+                filtered: linear_filter(b, a, x, zi),
+                zi: None,
+            };
+        } else {
+            return LFilterOutput {
+                filtered: linear_filter(b, a, x, zi),
+                zi: None,
+            };
+        }
     }
 }

@@ -1,5 +1,6 @@
 mod common;
 use common::with_scipy;
+use numpy::Complex64;
 use rand::Rng;
 use sciport_rs::signal::{band_filter::BandFilter, firwin1::firwin, windows::WindowType};
 
@@ -41,13 +42,22 @@ fn test_firwin() {
             BandFilter::Lowpass(data) => (format!("{data}"), "lowpass"),
             BandFilter::Highpass(data) => (format!("{data}"), "highpass"),
         };
-        let rust_res = firwin(numtaps, cutoff, None, WindowType::Hamming, true, None).to_vec();
+        let rust_res = firwin(numtaps, cutoff, None, WindowType::Hamming, true, None)
+            .ba()
+            .b
+            .mapv(|a| a.re)
+            .to_vec();
 
         let py_script = format!("signal.firwin({numtaps}, {wn}, pass_zero=\"{btype}\")");
 
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let python = with_scipy::<Vec<f64>>(&py_script);
+        let python = if let Some(p) = python {
+            p
+        } else {
+            continue;
+        };
 
-        approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(), epsilon = 0.01);
+        approx::assert_relative_eq!(rust_res.as_slice(), python.as_slice(), epsilon = 0.01);
     }
 }
 

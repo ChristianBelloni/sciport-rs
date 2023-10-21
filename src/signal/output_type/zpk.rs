@@ -1,7 +1,8 @@
-use super::Ba;
+use super::{GenericBa, GenericZpk, LFilterOutput};
 use std::ops::Mul;
 
-use num::{Complex, Num};
+use ndarray::Ix1;
+use num::{traits::FloatConst, Complex, Float, Num};
 
 use super::{Filter, Zpk};
 
@@ -29,15 +30,13 @@ where
     }
 }
 
-impl Filter for Zpk {
-    fn lfilter<D: ndarray::Dimension>(
+impl<T: Float + FloatConst> Filter<T> for GenericZpk<T> {
+    fn lfilter(
         &self,
-        b: ndarray::Array1<f64>,
-        a: ndarray::Array1<f64>,
-        x: ndarray::Array<f64, D>,
-        zi: Option<ndarray::Array<f64, D>>,
-    ) -> Option<ndarray::Array<f64, D>> {
-        let ba: Ba = self.clone().into();
-        ba.lfilter(b, a, x, zi)
+        x: ndarray::Array1<Complex<T>>,
+        zi: Option<ndarray::Array1<Complex<T>>>,
+    ) -> LFilterOutput<T, Ix1> {
+        let ba: GenericBa<T> = self.clone().into();
+        ba.lfilter(x, zi)
     }
 }

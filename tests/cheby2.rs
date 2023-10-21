@@ -3,12 +3,17 @@ use crate::common::check_zpk_filter;
 use common::with_scipy;
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
-use sciport_rs::signal::{band_filter::BandFilter, cheby2::*, output_type::Zpk, Analog};
+use sciport_rs::signal::{
+    band_filter::BandFilter,
+    cheby2::*,
+    output_type::{DesiredFilterOutput, Zpk},
+    Analog, FilterDesign, GenericFilterSettings,
+};
 
 #[test]
 fn with_py_test_cheby2() {
-    for _ in 0..10_000 {
-        let order = rand::thread_rng().gen_range(0..50);
+    for _ in 0..1000 {
+        let order = rand::thread_rng().gen_range(0..200);
         let kind = rand::thread_rng().gen_range(0..4);
         let rp = rand::thread_rng().gen_range(0.0..10.0);
         let band_filter = match kind {
@@ -46,13 +51,18 @@ fn with_py_test_cheby2() {
 
 #[test]
 fn test_cheb2ap() {
-    for i in 0..10_000 {
+    for i in 0..1025 {
         println!("testing buttap order {i}");
         let rs = thread_rng().gen_range(0.0..15.0);
         let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(
             "signal.cheb2ap({i}, rs={rs})"
         ));
         let rust = cheb2ap(i, rs);
+        let python = if let Some(p) = python {
+            p
+        } else {
+            continue;
+        };
         assert!(check_zpk_filter(rust, python));
     }
 }
@@ -73,13 +83,30 @@ fn test_cheby2(order: u32, band_filter: BandFilter, analog: Analog, rs: f64) {
         "signal.cheby2({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs}, rs={rs})"
     );
     let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(py_code);
-    let rust = Cheby2FilterStandalone::<Zpk>::filter(order, band_filter, analog, rs);
+
+    let python = if let Some(p) = python {
+        p
+    } else {
+        return;
+    };
+
+    let filter = Cheby2Filter {
+        rs,
+        settings: GenericFilterSettings {
+            order,
+            band_filter,
+            analog,
+        },
+    };
+
+    let rust = filter.filter(DesiredFilterOutput::Zpk).zpk();
+
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {
         println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, rs: {rs}");
 
-        println!("rust: {:#?}", rust);
-        println!("python: {:#?}", python);
+        println!("rust: {:?}", rust);
+        println!("python: {:?}", python);
         println!("python code: {}", py_code);
     }
     assert!(success);

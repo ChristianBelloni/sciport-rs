@@ -1,144 +1,47 @@
-use std::marker::PhantomData;
-
 use ndarray::{array, Array1};
-use num::{complex::Complex64, Complex};
+use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float};
 
-use crate::signal::{
-    band_filter::BandFilter,
-    iir_filter,
-    output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk},
-    Analog,
-};
+use crate::signal::output_type::GenericZpk;
 
-/// Butterworth digital and analog filter design.
-///
-/// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
-///
-/// # Notes
-///
-/// The Butterworth filter has maximally flat frequency response in the passband.
-///
-/// See [`buttap`] for implementation details and references.
-///
+use super::{GenericFilterSettings, ProtoFilter};
+
 pub struct ButterFilter<T> {
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    cache: Option<T>,
+    pub settings: GenericFilterSettings<T>,
 }
 
-impl<T> ButterFilter<T> {
-    pub fn new(order: u32, band_filter: BandFilter, analog: Analog) -> Self {
-        Self {
-            order,
-            band_filter,
-            analog,
-            cache: None,
-        }
+impl<T: Float + FloatConst + ComplexFloat + Clone> ProtoFilter<T> for ButterFilter<T> {
+    fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
+        buttap(self.settings.order)
+    }
+
+    fn filter_settings(&self) -> &GenericFilterSettings<T> {
+        &self.settings
     }
 }
 
-crate::impl_iir!(
-    ButterFilter<Zpk>,
-    Zpk,
-    self,
-    ButterFilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog)
-);
-
-crate::impl_iir!(
-    ButterFilter<Ba>,
-    Ba,
-    self,
-    ButterFilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog)
-);
-
-/// Butterworth digital and analog filter design.
-///
-/// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
-///
-/// # Notes
-///
-/// The Butterworth filter has maximally flat frequency response in the passband.
-///
-/// See [`buttap`] for implementation details and references.
-///
-pub struct ButterFilterStandalone<T>(PhantomData<T>);
-
-impl ButterFilterStandalone<Zpk> {
-    /// Butterworth digital and analog filter design.
-    ///
-    /// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
-    ///
-    /// # Parameters
-    ///  - order : Order of the filter
-    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
-    /// frequency (rad/s).
-    /// for digital filters band is in the same units as [`Analog`]
-    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
-    ///  a sampling rate is required
-    pub fn filter(order: u32, band_filter: BandFilter, analog: Analog) -> Zpk {
-        let filter = butter_filter(order, band_filter, analog, DesiredFilterOutput::Zpk);
-        filter.zpk()
-    }
-}
-
-impl ButterFilterStandalone<Ba> {
-    /// Butterworth digital and analog filter design.
-    ///
-    /// Design an Nth-order digital or analog Butterworth filter and return the filter coefficients.
-    ///
-    /// # Parameters
-    ///  - order : Order of the filter
-    ///  - band: [`BandFilter`] to apply, for analog filters band is expressed as an angular</br>
-    /// frequency (rad/s).
-    /// for digital filters band is in the same units as [`Analog`]
-    ///  - analog: Analog or Digital filter selection, when digital is selected<br/>
-    ///  a sampling rate is required
-    pub fn filter(order: u32, band_filter: BandFilter, analog: Analog) -> Ba {
-        let filter = butter_filter(order, band_filter, analog, DesiredFilterOutput::Ba);
-        filter.ba()
-    }
-}
-
-pub(crate) fn butter_filter(
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    desired_output: DesiredFilterOutput,
-) -> FilterOutput {
-    let proto = buttap(order);
-    iir_filter(proto, order, band_filter, analog, desired_output)
-}
-
-pub fn buttap(order: u32) -> Zpk {
+pub fn buttap<T: Float>(order: u32) -> GenericZpk<T> {
+    use std::f64::consts::PI;
     let order = order as i32;
     let z = array![];
-    let mut range: Array1<Complex64> = ((-order + 1)..order)
-        .step_by(2)
-        .map(|a| (a as f64).into())
-        .collect();
+    let range = Array1::range(
+        T::from(1.0 - order as f64).unwrap(),
+        T::from(order).unwrap(),
+        T::from(2.0).unwrap(),
+    );
 
-    fn make_iteration(item: Complex64, order: i32) -> Complex<f64> {
-        let numerator = Complex::new(0.0, 1.0) * std::f64::consts::PI * item;
-        let denominator = 2.0 * order as f64;
+    let range = range.mapv(|a| Complex::from(a));
+    let k = T::one();
 
-        let mut temp = numerator / denominator;
-        if temp.im == 0.0 || temp.im == -0.0 {
-            temp.im = 0.0;
+    let p = -(range
+        .mapv(|a| Complex::i() * T::from(PI).unwrap() * a / T::from(2 * order).unwrap()))
+    .mapv(Complex::exp);
+
+    let p = p.mapv(|mut a| {
+        if a.im == T::neg_zero() {
+            a.im = T::zero()
         }
-        -temp.exp()
-    }
-
-    range.par_mapv_inplace(|item| make_iteration(item, order));
-
-    let p = range.map(|a| {
-        if a.im == 0.0 || a.im == -0.0 {
-            Complex64::new(a.re, 0.0)
-        } else {
-            *a
-        }
+        a
     });
-    let k = 1.0;
 
-    Zpk { z, p, k }
+    GenericZpk { z, p, k }
 }

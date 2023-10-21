@@ -25,9 +25,10 @@
 //! # References:
 //!
 //! The documentation on this page is largely been copied from the [SciPy](https://docs.scipy.org/doc/scipy/tutorial/signal.html) documentation
+
 use self::{
-    band_filter::{lp2bf_zpk, BandFilter},
-    output_type::{DesiredFilterOutput, FilterOutput, Zpk},
+    band_filter::{lp2bf_zpk, BandFilter, GenericBandFilter},
+    output_type::{DesiredFilterOutput, FilterGetOutputBounds, GenericFilterOutput, GenericZpk},
     tools::bilinear_zpk,
 };
 
@@ -40,85 +41,84 @@ mod signal_tools;
 pub use filter_design::{bessel, butter, cheby1, cheby2};
 
 pub use fir_filter_design::*;
+use trait_set::trait_set;
 
 pub mod band_filter;
 pub mod output_type;
 pub mod tools;
 
+pub use filter_design::FilterDesign;
+pub use filter_design::GenericFilterSettings;
+
+pub type Analog = GenericAnalog<f64>;
+
 #[derive(Debug, Clone, Copy)]
-pub enum Analog {
+pub enum GenericAnalog<T> {
     True,
-    False { fs: f64 },
+    False { fs: T },
 }
 
-impl Analog {
+impl<T> GenericAnalog<T> {
     pub fn is_analog(&self) -> bool {
         match self {
             Self::True => true,
             Self::False { .. } => false,
         }
     }
+
+    pub fn cast<K>(self) -> GenericAnalog<K>
+    where
+        K: From<T>,
+    {
+        match self {
+            GenericAnalog::True => GenericAnalog::True,
+            GenericAnalog::False { fs } => GenericAnalog::False { fs: fs.into() },
+        }
+    }
+
+    pub fn cast_with_fn<K>(self, f: impl Fn(T) -> K) -> GenericAnalog<K> {
+        match self {
+            GenericAnalog::True => GenericAnalog::True,
+            GenericAnalog::False { fs } => GenericAnalog::False { fs: f(fs) },
+        }
+    }
+}
+
+trait_set! {
+    pub trait IIRFilterBounds = FilterGetOutputBounds;
 }
 
 /// Generic iir_filter
 ///
 /// Takes a filter prototype and returns the final filter in the desired output
-pub fn iir_filter(
-    proto: Zpk,
+pub fn iir_filter<T>(
+    proto: GenericZpk<T>,
     _order: u32,
-    mut band_filter: BandFilter,
-    mut analog: Analog,
+    mut band_filter: GenericBandFilter<T>,
+    mut analog: GenericAnalog<T>,
     desired_output: DesiredFilterOutput,
-) -> FilterOutput {
-    let mut warped = band_filter;
+) -> GenericFilterOutput<T>
+where
+    T: IIRFilterBounds,
+{
+    use std::f64::consts::PI;
+
+    let mut warped: GenericBandFilter<T> = band_filter;
     match &mut analog {
-        Analog::True => {}
-        Analog::False { fs } => {
-            band_filter = (band_filter * 2.0) / *fs;
-            *fs = 2.0;
-            warped = ((band_filter * std::f64::consts::PI) / *fs).tan() * 2.0 * *fs;
+        GenericAnalog::True => {}
+        GenericAnalog::False { fs } => {
+            band_filter = (band_filter * T::from(2).unwrap()) / *fs;
+            *fs = T::from(2).unwrap();
+            let tmp: GenericBandFilter<_> = ((band_filter * T::from(PI).unwrap()) / *fs).tan();
+            warped = tmp * T::from(4).unwrap();
         }
     }
+
     let mut result = lp2bf_zpk(proto, warped);
 
-    if let Analog::False { fs } = &analog {
+    if let GenericAnalog::False { fs } = &analog {
         result = bilinear_zpk(result, *fs);
     }
 
-    FilterOutput::get_output(result, desired_output)
-}
-
-pub trait IIRFilter<T: ToOwned> {
-    fn design_filter(&self) -> T;
-    fn cache(&self) -> &Option<T>;
-    fn cache_mut(&mut self) -> &mut Option<T>;
-
-    /// Computes and returns the filter coefficients
-    fn get_filter(&mut self) -> &T {
-        if self.cache().is_some() {
-            return self.cache().as_ref().unwrap();
-        } else {
-            let filter = self.design_filter();
-            self.cache_mut().insert(filter)
-        }
-    }
-}
-#[doc(hidden)]
-#[macro_export]
-macro_rules! impl_iir {
-    ($f:ty, $T:ty, $sel:ident, $design:expr) => {
-        impl $crate::signal::IIRFilter<$T> for $f {
-            fn cache(&self) -> &Option<$T> {
-                &self.cache
-            }
-
-            fn cache_mut(&mut self) -> &mut Option<$T> {
-                &mut self.cache
-            }
-
-            fn design_filter(&$sel) -> $T {
-                $design
-            }
-        }
-    };
+    GenericFilterOutput::get_output(result, desired_output)
 }
