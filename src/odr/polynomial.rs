@@ -1,5 +1,6 @@
 use itertools::{EitherOrBoth, Itertools};
-use num::complex::{Complex32, Complex64, ComplexFloat};
+use num::complex::ComplexFloat;
+use num::Float;
 use std::fmt::{Debug, Display};
 use std::ops::{Add, Div, Index, Mul, Sub};
 use std::rc::Rc;
@@ -11,7 +12,7 @@ use crate::optimize::{IntoMetric, Metric};
 
 /// # `PolynomialCoef`
 /// a common trait for polynomial coefficient, just for display purposes
-pub trait PolynomialCoef: ComplexFloat + Clone + Debug + 'static {
+pub trait PolynomialCoef: ComplexFloat + Clone {
     fn coef_to_string(&self) -> String;
 }
 
@@ -122,10 +123,7 @@ where
         let (remainder, quotient) = result.split_last()?;
         Some((quotient.iter().rev().collect(), remainder.to_owned()))
     }
-    /// take ownership and package the polynomial into `Rc<dyn Fn(T)->T>`
-    pub fn as_rc(self) -> Rc<dyn Fn(T) -> T> {
-        Rc::new(move |x| self.eval(x))
-    }
+
     /// find all root of the polynomial,
     ///
     /// where all its root will be in complex number data structure
@@ -150,6 +148,16 @@ where
         Q: ComplexFloat + Scalar + Debug + Espilon,
     {
         least_square::poly_fit(x, y, order)
+    }
+}
+
+impl<T> Polynomial<T>
+where
+    T: PolynomialCoef + 'static,
+{
+    /// take ownership and package the polynomial into `Rc<dyn Fn(T)->T>`
+    pub fn as_rc(self) -> Rc<dyn Fn(T) -> T> {
+        Rc::new(move |x| self.eval(x))
     }
 }
 
@@ -263,7 +271,7 @@ where
 
 impl<'a, T> FromIterator<&'a T> for Polynomial<T>
 where
-    T: PolynomialCoef,
+    T: PolynomialCoef + 'a,
 {
     fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
         iter.into_iter().cloned().collect()
@@ -299,23 +307,32 @@ where
     }
 }
 
-impl PolynomialCoef for f64 {
+impl<T> PolynomialCoef for T
+where
+    T: ComplexFloat + Clone,
+{
     fn coef_to_string(&self) -> String {
-        format!("{:9.2}", self)
+        "coeff doesn't implement display".into()
     }
 }
-impl PolynomialCoef for f32 {
-    fn coef_to_string(&self) -> String {
-        format!("{:9.2}", self)
-    }
-}
-impl PolynomialCoef for Complex32 {
-    fn coef_to_string(&self) -> String {
-        format!("({:9.2} + {:9.2}i)", self.re, self.im)
-    }
-}
-impl PolynomialCoef for Complex64 {
-    fn coef_to_string(&self) -> String {
-        format!("({:9.2} + {:9.2}i)", self.re, self.im)
-    }
-}
+
+// impl PolynomialCoef for Complex32 {
+//     fn coef_to_string(&self) -> String {
+//         format!("({:9.2} + {:9.2}i)", self.re, self.im)
+//     }
+// }
+// impl PolynomialCoef for Complex64 {
+//     fn coef_to_string(&self) -> String {
+//         format!("({:9.2} + {:9.2}i)", self.re, self.im)
+//     }
+// }
+
+// impl<T> PolynomialCoef for Complex<T>
+// where
+//     Complex<T>: ComplexFloat + Clone + Debug + 'static,
+//     T: std::fmt::Display,
+// {
+//     fn coef_to_string(&self) -> String {
+//         format!("({:9.2} + {:9.2}i)", self.re, self.im)
+//     }
+// }

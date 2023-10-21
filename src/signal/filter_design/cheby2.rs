@@ -1,99 +1,89 @@
-use crate::signal::band_filter::BandFilter;
-use crate::signal::output_type::{Ba, DesiredFilterOutput, FilterOutput, Zpk};
-use crate::signal::{iir_filter, Analog};
-use ndarray::{array, Array1};
-use num::complex::Complex64;
-use std::marker::PhantomData;
+use crate::signal::output_type::GenericZpk;
+use ndarray::{array, concatenate, Array1, Axis};
+use num::{complex::ComplexFloat, Complex, Float};
 
-pub struct Cheby2FilterStandalone<T>(PhantomData<T>);
-
-impl Cheby2FilterStandalone<Zpk> {
-    pub fn filter(order: u32, band_filter: BandFilter, analog: Analog, rs: f64) -> Zpk {
-        cheby2_filter(order, band_filter, analog, rs, DesiredFilterOutput::Zpk).zpk()
-    }
-}
-
-impl Cheby2FilterStandalone<Ba> {
-    pub fn filter(order: u32, band_filter: BandFilter, analog: Analog, rs: f64) -> Ba {
-        cheby2_filter(order, band_filter, analog, rs, DesiredFilterOutput::Ba).ba()
-    }
-}
+use super::{GenericFilterSettings, ProtoFilter};
 
 pub struct Cheby2Filter<T> {
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    rs: f64,
-    cache: Option<T>,
+    pub rs: T,
+    pub settings: GenericFilterSettings<T>,
 }
 
-crate::impl_iir!(
-    Cheby2Filter::<Zpk>,
-    Zpk,
-    self,
-    Cheby2FilterStandalone::<Zpk>::filter(self.order, self.band_filter, self.analog, self.rs)
-);
+impl<T: Float + num::traits::FloatConst + ComplexFloat + Clone> ProtoFilter<T> for Cheby2Filter<T> {
+    fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
+        cheb2ap(self.settings.order, self.rs)
+    }
 
-crate::impl_iir!(
-    Cheby2Filter::<Ba>,
-    Ba,
-    self,
-    Cheby2FilterStandalone::<Ba>::filter(self.order, self.band_filter, self.analog, self.rs)
-);
-
-pub(crate) fn cheby2_filter(
-    order: u32,
-    band_filter: BandFilter,
-    analog: Analog,
-    rs: f64,
-    desired_output: DesiredFilterOutput,
-) -> FilterOutput {
-    let proto = cheb2ap(order, rs);
-    iir_filter(proto, order, band_filter, analog, desired_output)
+    fn filter_settings(&self) -> &GenericFilterSettings<T> {
+        &self.settings
+    }
 }
 
-pub fn cheb2ap(order: u32, rs: f64) -> Zpk {
+pub fn cheb2ap<T: Float>(order: u32, rs: T) -> GenericZpk<T> {
+    use std::f64::consts::PI;
     if order == 0 {
-        return Zpk {
+        return GenericZpk {
             z: array![],
             p: array![],
-            k: 2.0,
+            k: T::one(),
         };
     }
 
-    let de = 2.0 / (10.0_f64.powf(0.1 * rs) - 1.0).sqrt();
+    let de = T::one() / (T::from(10).unwrap().powf(T::from(0.1).unwrap() * rs) - T::one()).sqrt();
+    let mu = (T::one() / de).asinh() / T::from(order).unwrap();
 
-    let mu = (2.0 / de).asinh() / order as f64;
-    let m: Array1<Complex64> = if order % 2 == 0 {
-        let first = ((-(order as i32) + 2)..0)
-            .step_by(2)
-            .map(|a| (a as f64).into());
-        let second = (2..(order as i32)).step_by(2).map(|a| (a as f64).into());
-
-        first.chain(second).collect()
+    let m = if order % 2 == 1 {
+        concatenate![
+            Axis(0),
+            Array1::range(
+                -T::from(order).unwrap() + T::one(),
+                T::zero(),
+                T::from(2).unwrap()
+            ),
+            Array1::range(
+                T::from(2).unwrap(),
+                T::from(order).unwrap(),
+                T::from(2).unwrap()
+            )
+        ]
     } else {
-        ((-(order as i32) + 2)..(order as i32))
-            .step_by(2)
-            .map(|a| (a as f64).into())
-            .collect()
-    };
+        Array1::range(
+            -T::from(order).unwrap() + T::one(),
+            T::from(order).unwrap(),
+            T::from(2).unwrap(),
+        )
+    }
+    .mapv(Complex::from);
+    let z = -m
+        .mapv(|a| a * T::from(PI).unwrap())
+        .mapv(|a| a / (T::from(2 * order).unwrap()))
+        .mapv(Complex::sin)
+        .mapv(|a| Complex::<T>::i() / a)
+        .map(Complex::conj);
 
-    let z = m.map(|a| {
-        -(Complex64::i() / (a * std::f64::consts::PI / (2.0 * (order as f64))).sin()).conj()
+    let order = T::from(order).unwrap();
+
+    let p = -Array1::range(-order + T::one(), order, T::from(2).unwrap())
+        .mapv(|a| a / (T::from(2).unwrap() * order))
+        .mapv(|a| Complex::i() * T::from(PI).unwrap() * a)
+        .mapv(Complex::exp);
+    let p = p.mapv(|a| {
+        let re = mu.sinh() * a.re;
+        let im = mu.cosh() * a.im;
+        Complex::new(re, im)
     });
+    let p = p.map(Complex::inv);
 
-    let tmp: Array1<Complex64> = ((-(order as i32) + 2)..(order as i32))
-        .map(|a| (a as f64).into())
-        .collect();
+    let k = if z.len() == p.len() {
+        (-&p / -&z).product()
+    } else if z.len() > p.len() {
+        let tmp_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
+        (tmp_p / -&z).product()
+    } else {
+        let tmp_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
+        (-&p / tmp_z).product()
+    }
+    .re;
 
-    let mut p =
-        tmp.map(|a| -(Complex64::i() * std::f64::consts::PI * a / (2.0 * order as f64)).exp());
-
-    p.map_inplace(|a| {
-        *a = mu.sinh() * a.re + Complex64::i() * mu.cosh() * a.im;
-    });
-
-    let k = (p.map(|a| -a).product() / z.map(|a| -a).product()).re;
-
-    Zpk { z, p, k }
+    GenericZpk { z, p, k }
 }

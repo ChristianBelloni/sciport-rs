@@ -13,17 +13,22 @@ repository = "https://github.com/ChristianBelloni/sciport-rs"
 
 [dependencies]
 num = "0.4.0"
+num-bigfloat = "1.7.0"
 complex-bessel-rs = { version = "0.0.5" }
 #complex-bessel-rs = { path = "../complex-bessel-rs" }
 ndarray = { version = "0.15.6", features = ["rayon"] }
-numpy = "0.19.0"
+numpy = "0.20.0"
 itertools = "0.11.0"
 nalgebra = "0.32.3"
+approx = { version = "0.5", features = ["num-complex"] }
+bigdecimal = "0.4.1"
+trait-set = "0.3.0"
+num-rational = "0.4"
 [dev-dependencies]
-pyo3 = { version = "0.19.1", features = ["full", "auto-initialize"] }
+pyo3 = { version = "0.20.0", features = ["full", "auto-initialize"] }
 ndarray = { version = "0.15.6", features = ["rayon", "approx-0_5"] }
+ndarray-rand = "0.14"
 rand = "0.8.5"
-approx = "0.5"
 lazy_static = "1.4.0"
 # blas-src = { version = "0.8.0", default-features = false, features = ["accelerate"] }
 

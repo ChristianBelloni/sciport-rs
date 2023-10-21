@@ -17,7 +17,7 @@ pub fn test_i0() {
             .mapv(|a| a.norm())
             .to_vec();
         let py_script = format!("special.i0({v:?})");
-        let py_res: Vec<Complex<f64>> = with_scipy(&py_script);
+        let py_res: Vec<Complex<f64>> = with_scipy(&py_script).unwrap();
         let py_res: Vec<f64> = py_res.into_iter().map(|a| a.norm()).collect();
 
         approx::assert_relative_eq!(

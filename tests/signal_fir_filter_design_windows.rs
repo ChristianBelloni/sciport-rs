@@ -32,7 +32,7 @@ pub fn test_boxcar() {
         let sym = rand::random();
         let rust_res = boxcar(len, sym).to_vec();
         let py_script = format!("signal.windows.boxcar({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
 
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
@@ -45,7 +45,7 @@ pub fn test_triang() {
         let sym = rand::random();
         let rust_res = triang(len, sym).to_vec();
         let py_script = format!("signal.windows.triang({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
 
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
@@ -58,7 +58,7 @@ pub fn test_blackman() {
         let sym = rand::random();
         let rust_res = blackman(len, sym).to_vec();
         let py_script = format!("signal.windows.blackman({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -70,7 +70,7 @@ pub fn test_hamming() {
         let sym = rand::random();
         let rust_res = hamming(len, sym).to_vec();
         let py_script = format!("signal.windows.hamming({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -82,7 +82,7 @@ pub fn test_hann() {
         let sym = rand::random();
         let rust_res = hann(len, sym).to_vec();
         let py_script = format!("signal.windows.hann({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -94,7 +94,7 @@ pub fn test_bartlett() {
         let sym = rand::random();
         let rust_res = bartlett(len, sym).to_vec();
         let py_script = format!("signal.windows.bartlett({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -106,7 +106,7 @@ pub fn test_flattop() {
         let sym = rand::random();
         let rust_res = flattop(len, sym).to_vec();
         let py_script = format!("signal.windows.flattop({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -118,7 +118,7 @@ pub fn test_parzen() {
         let sym = rand::random();
         let rust_res = parzen(len, sym).to_vec();
         let py_script = format!("signal.windows.parzen({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -130,7 +130,7 @@ pub fn test_bohman() {
         let sym = rand::random();
         let rust_res = bohman(len, sym).to_vec();
         let py_script = format!("signal.windows.bohman({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -142,7 +142,7 @@ pub fn test_blackmanharris() {
         let sym = rand::random();
         let rust_res = blackmanharris(len, sym).to_vec();
         let py_script = format!("signal.windows.blackmanharris({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -154,7 +154,7 @@ pub fn test_nuttall() {
         let sym = rand::random();
         let rust_res = nuttall(len, sym).to_vec();
         let py_script = format!("signal.windows.nuttall({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -166,7 +166,7 @@ pub fn test_barthann() {
         let sym = rand::random();
         let rust_res = barthann(len, sym).to_vec();
         let py_script = format!("signal.windows.barthann({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -178,7 +178,7 @@ pub fn test_cosine() {
         let sym = rand::random();
         let rust_res = cosine(len, sym).to_vec();
         let py_script = format!("signal.windows.cosine({len}, {})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -190,7 +190,7 @@ pub fn test_exponential() {
         let sym = rand::random();
         let rust_res = exponential(len, None, None, sym).to_vec();
         let py_script = format!("signal.windows.exponential({len}, sym={})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -206,7 +206,7 @@ pub fn test_tukey() {
             "signal.windows.tukey({len}, alpha={alpha}, sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -221,7 +221,7 @@ pub fn test_taylor() {
             "signal.windows.taylor({len},norm=False,sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
 
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
@@ -234,7 +234,7 @@ pub fn test_lanczos() {
         let sym = rand::random();
         let rust_res = lanczos(len, sym).to_vec();
         let py_script = format!("signal.windows.lanczos({len}, sym={})", py_bool(sym));
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice());
     }
 }
@@ -250,7 +250,7 @@ pub fn test_kaiser() {
             "signal.windows.kaiser({len}, beta={beta}, sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(
             rust_res.as_slice(),
             py_res.as_slice(),
@@ -271,7 +271,7 @@ pub fn test_kaiser_bessel_derived() {
             "signal.windows.kaiser_bessel_derived({len}, beta={beta}, sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(
             rust_res.as_slice(),
             py_res.as_slice(),
@@ -292,7 +292,7 @@ pub fn test_gaussian() {
             "signal.windows.gaussian({len}, {std_dev}, sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(),);
     }
 }
@@ -310,7 +310,7 @@ pub fn test_general_gaussian() {
             "signal.windows.general_gaussian({len}, {p}, {sig}, sym={})",
             py_bool(sym)
         );
-        let py_res: Vec<f64> = with_scipy(&py_script);
+        let py_res: Vec<f64> = with_scipy(&py_script).unwrap();
         approx::assert_relative_eq!(rust_res.as_slice(), py_res.as_slice(),);
     }
 }

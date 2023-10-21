@@ -1,6 +1,7 @@
+use crate::signal::output_type::{Ba, FilterOutput};
 use crate::signal::BandFilter;
 use crate::special::sinc;
-use ndarray::Array1;
+use ndarray::{array, Array1};
 
 use super::windows::{get_window, WindowType};
 use super::{kaiser_atten, kaiser_beta};
@@ -12,7 +13,7 @@ pub fn firwin(
     mut window: WindowType,
     scale: bool,
     fs: Option<f64>,
-) -> Array1<f64> {
+) -> FilterOutput {
     let nyq = 0.5 * fs.unwrap_or(2.0);
     let cutoff = cutoff / nyq;
 
@@ -81,7 +82,10 @@ pub fn firwin(
         h /= s;
     }
 
-    h
+    FilterOutput::Ba(Ba {
+        a: array![1.0].mapv(Into::into),
+        b: h.mapv(Into::into),
+    })
 }
 
 #[cfg(test)]

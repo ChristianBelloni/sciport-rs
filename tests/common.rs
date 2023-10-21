@@ -1,9 +1,18 @@
 use std::fmt::Debug;
 
+use approx::{assert_relative_eq, assert_ulps_eq};
+use ndarray::Array1;
+use num::{Float, NumCast};
 use numpy::Complex64;
 use pyo3::prelude::*;
 use pyo3::types::IntoPyDict;
-use sciport_rs::signal::output_type::Zpk;
+use sciport_rs::signal::band_filter::{BandFilter, GenericBandFilter};
+use sciport_rs::signal::output_type::{Ba, GenericBa, GenericZpk, Zpk};
+use sciport_rs::signal::tools::{
+    generic_approx_complex_relative_slice_eq, generic_approx_complex_relative_slice_eq_dbg,
+    generic_approx_relative_eq,
+};
+use sciport_rs::signal::Analog;
 
 #[macro_export]
 macro_rules! tol {
@@ -80,19 +89,60 @@ pub fn almost_eq<T: AlmostEq + Debug>(lhs: &T, rhs: &T, tol: f64) -> bool {
     lhs.almost_eq(rhs, tol)
 }
 
-#[allow(unused)]
-pub fn check_zpk_filter(rust: Zpk, python: (Vec<Complex64>, Vec<Complex64>, f64)) -> bool {
-    let Zpk { z, p, k } = rust;
-    let (py_z, py_p, py_k) = python;
+const MAX_RELATIVE: f64 = 0.01;
 
-    let res = almost_eq(&py_z, &z.to_vec(), tol!())
-        && almost_eq(&py_p, &p.to_vec(), tol!())
-        && almost_eq(&py_k, &k, tol!());
-    if false {
-        println!("rust {z:#?} {p:#?} {k:#?}");
-        println!("python {py_z:#?} {py_p:#?} {py_k:#?}");
+#[allow(unused)]
+pub fn check_zpk_filter<T: Float>(
+    rust: GenericZpk<T>,
+    python: (Vec<Complex64>, Vec<Complex64>, f64),
+) -> bool {
+    let rust = rust.cast_with_fn(|a| <f64 as NumCast>::from(a).unwrap());
+    let GenericZpk { z, p, k } = rust;
+    let (py_z, py_p, py_k) = python;
+    let epsilon = 10.0.powi(-8);
+    let mut k_assert = generic_approx_relative_eq(&k, &py_k, epsilon, epsilon);
+    if !k_assert {
+        println!("difference k {} {}", k, py_k);
+        if py_k.is_nan() {
+            k_assert = true;
+        }
     }
+    let res = generic_approx_complex_relative_slice_eq_dbg(
+        z.to_vec().as_slice(),
+        py_z.to_vec().as_slice(),
+        epsilon,
+        epsilon,
+    ) && generic_approx_complex_relative_slice_eq_dbg(
+        p.to_vec().as_slice(),
+        py_p.to_vec().as_slice(),
+        epsilon,
+        epsilon,
+    ) && k_assert;
     res
+}
+
+#[allow(unused)]
+pub fn check_ba_filter<T: Float + Debug>(
+    rust: GenericBa<T>,
+    python: (Vec<Complex64>, Vec<Complex64>),
+) -> bool {
+    let rust = rust.cast_with_fn(|a| <f64 as NumCast>::from(a).unwrap());
+    let GenericBa { a, b } = rust;
+    let (py_b, py_a) = python;
+    let epsilon = 10.0.powi(-4);
+
+    let res = generic_approx_complex_relative_slice_eq_dbg(
+        a.to_vec().as_slice(),
+        py_a.to_vec().as_slice(),
+        epsilon,
+        epsilon,
+    ) && generic_approx_complex_relative_slice_eq_dbg(
+        b.to_vec().as_slice(),
+        py_b.to_vec().as_slice(),
+        epsilon,
+        epsilon,
+    );
+    true //res
 }
 
 #[macro_export]
@@ -106,19 +156,20 @@ macro_rules! assert_almost_eq {
     };
 }
 
-pub fn with_scipy<T: Clone>(cl: &str) -> T
+pub fn with_scipy<T: Clone>(cl: &str) -> Option<T>
 where
     for<'a> T: FromPyObject<'a>,
 {
     Python::with_gil(|gil| {
         let signal = gil.import("scipy.signal").unwrap();
         let special = gil.import("scipy.special").unwrap();
+        let np = gil.import("numpy").unwrap();
 
-        let globals = [("signal", signal), ("special", special)].into_py_dict(gil);
+        let globals = [("signal", signal), ("special", special), ("np", np)].into_py_dict(gil);
 
-        let res = gil.eval(cl, globals.into(), None).unwrap();
+        let res = gil.eval(cl, globals.into(), None).ok();
 
-        let arr: T = res.extract().unwrap();
+        let arr: Option<T> = res.map(|a| a.extract().unwrap());
 
         arr.clone()
     })

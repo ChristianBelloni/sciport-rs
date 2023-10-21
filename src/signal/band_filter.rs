@@ -1,19 +1,57 @@
+use super::{output_type::GenericZpk, tools::relative_degree};
+use ndarray::{array, concatenate, Array1, ArrayView, Axis};
+use num::{Complex, Float, Num, NumCast, Zero};
 use std::ops::{Div, Mul};
 
-use ndarray::{array, concatenate, Array, Array1, ArrayView, Axis};
-use num::{traits::Pow, Complex, Num, Zero};
-
-use super::{output_type::Zpk, tools::relative_degree};
+pub type BandFilter = GenericBandFilter<f64>;
 
 #[derive(Debug, Clone, Copy)]
-pub enum BandFilter {
-    Highpass(f64),
-    Lowpass(f64),
-    Bandpass { low: f64, high: f64 },
-    Bandstop { low: f64, high: f64 },
+pub enum GenericBandFilter<T> {
+    Highpass(T),
+    Lowpass(T),
+    Bandpass { low: T, high: T },
+    Bandstop { low: T, high: T },
 }
 
-impl BandFilter {
+impl<T> GenericBandFilter<T> {
+    pub fn cast<K>(self) -> GenericBandFilter<K>
+    where
+        K: From<T>,
+    {
+        match self {
+            GenericBandFilter::Highpass(data) => GenericBandFilter::Highpass(data.into()),
+            GenericBandFilter::Lowpass(data) => GenericBandFilter::Lowpass(data.into()),
+            GenericBandFilter::Bandpass { low, high } => GenericBandFilter::Bandpass {
+                low: low.into(),
+                high: high.into(),
+            },
+            GenericBandFilter::Bandstop { low, high } => GenericBandFilter::Bandstop {
+                low: low.into(),
+                high: high.into(),
+            },
+        }
+    }
+
+    pub fn cast_with_fn<K>(self, f: impl Fn(T) -> K) -> GenericBandFilter<K> {
+        match self {
+            GenericBandFilter::Highpass(data) => GenericBandFilter::Highpass(f(data)),
+            GenericBandFilter::Lowpass(data) => GenericBandFilter::Lowpass(f(data)),
+            GenericBandFilter::Bandpass { low, high } => GenericBandFilter::Bandpass {
+                low: f(low),
+                high: f(high),
+            },
+            GenericBandFilter::Bandstop { low, high } => GenericBandFilter::Bandstop {
+                low: f(low),
+                high: f(high),
+            },
+        }
+    }
+}
+
+impl<T> GenericBandFilter<T>
+where
+    T: Float,
+{
     pub fn tan(self) -> Self {
         match self {
             Self::Highpass(data) => Self::Highpass(data.tan()),
@@ -31,24 +69,22 @@ impl BandFilter {
 
     pub fn size(&self) -> u8 {
         match self {
-            BandFilter::Highpass(_) | BandFilter::Lowpass(_) => 1,
-            BandFilter::Bandstop { low: _, high: _ } | BandFilter::Bandpass { low: _, high: _ } => {
-                2
-            }
+            Self::Highpass(_) | Self::Lowpass(_) => 1,
+            Self::Bandstop { low: _, high: _ } | Self::Bandpass { low: _, high: _ } => 2,
         }
     }
-    pub fn to_vec(self) -> Vec<f64> {
+    pub fn to_vec(self) -> Vec<T> {
         match self {
-            BandFilter::Highpass(f) | BandFilter::Lowpass(f) => vec![f],
-            BandFilter::Bandstop { low, high } | BandFilter::Bandpass { low, high } => {
+            Self::Highpass(f) | Self::Lowpass(f) => vec![f],
+            Self::Bandstop { low, high } | Self::Bandpass { low, high } => {
                 vec![low, high]
             }
         }
     }
-    pub fn to_array(self) -> Array1<f64> {
+    pub fn to_array(self) -> Array1<T> {
         match self {
-            BandFilter::Highpass(f) | BandFilter::Lowpass(f) => array![f],
-            BandFilter::Bandstop { low, high } | BandFilter::Bandpass { low, high } => {
+            Self::Highpass(f) | Self::Lowpass(f) => array![f],
+            Self::Bandstop { low, high } | Self::Bandpass { low, high } => {
                 array![low, high]
             }
         }
@@ -56,8 +92,8 @@ impl BandFilter {
 
     pub fn pass_zero(&self) -> bool {
         match self {
-            BandFilter::Bandpass { low: _, high: _ } | BandFilter::Highpass(_) => false,
-            BandFilter::Bandstop { low: _, high: _ } | BandFilter::Lowpass(_) => true,
+            Self::Bandpass { low: _, high: _ } | Self::Highpass(_) => false,
+            Self::Bandstop { low: _, high: _ } | Self::Lowpass(_) => true,
         }
     }
 
@@ -66,74 +102,83 @@ impl BandFilter {
     }
 }
 
-impl<T: Num + Copy> Mul<T> for BandFilter
+impl<T: Num + Copy, R: Num + Copy> Mul<R> for GenericBandFilter<T>
 where
-    f64: From<T>,
-    T: From<f64>,
+    T: Mul<R, Output = T>,
 {
     type Output = Self;
-    fn mul(self, rhs: T) -> Self::Output {
+    fn mul(self, rhs: R) -> Self::Output {
         match self {
-            Self::Highpass(data) => Self::Highpass((rhs.mul(data.into())).into()),
-            Self::Lowpass(data) => Self::Lowpass((rhs.mul(data.into())).into()),
+            Self::Highpass(data) => Self::Highpass(data * rhs),
+            Self::Lowpass(data) => Self::Lowpass(data * rhs),
             Self::Bandpass { low, high } => Self::Bandpass {
-                low: (rhs.mul(low.into())).into(),
-                high: (rhs.mul(high.into())).into(),
+                low: low * rhs,
+                high: high * rhs,
             },
             Self::Bandstop { low, high } => Self::Bandstop {
-                low: (rhs.mul(low.into())).into(),
-                high: (rhs.mul(high.into())).into(),
-            },
-        }
-    }
-}
-impl<T: Num + Copy> Div<T> for BandFilter
-where
-    f64: From<T>,
-    T: From<f64>,
-{
-    type Output = Self;
-    fn div(self, rhs: T) -> Self::Output {
-        match self {
-            Self::Highpass(data) => Self::Highpass(data / Into::<f64>::into(rhs)),
-            Self::Lowpass(data) => Self::Lowpass(data / Into::<f64>::into(rhs)),
-            Self::Bandpass { low, high } => Self::Bandpass {
-                low: low / Into::<f64>::into(rhs),
-                high: high / Into::<f64>::into(rhs),
-            },
-            Self::Bandstop { low, high } => Self::Bandstop {
-                low: low / Into::<f64>::into(rhs),
-                high: high / Into::<f64>::into(rhs),
+                low: low * rhs,
+                high: high * rhs,
             },
         }
     }
 }
 
-pub fn lp2bf_zpk(input: Zpk, wo: BandFilter) -> Zpk {
+impl<T: Num + Copy> Div<T> for GenericBandFilter<T> {
+    type Output = Self;
+    fn div(self, rhs: T) -> Self::Output {
+        match self {
+            Self::Highpass(data) => Self::Highpass(data / rhs),
+            Self::Lowpass(data) => Self::Lowpass(data / rhs),
+            Self::Bandpass { low, high } => Self::Bandpass {
+                low: low / rhs,
+                high: high / rhs,
+            },
+            Self::Bandstop { low, high } => Self::Bandstop {
+                low: low / rhs,
+                high: high / rhs,
+            },
+        }
+    }
+}
+
+pub fn lp2bf_zpk<T>(input: GenericZpk<T>, wo: GenericBandFilter<T>) -> GenericZpk<T>
+where
+    T: Float + Clone,
+{
     match wo {
-        BandFilter::Lowpass(wo) => lp2lp_zpk(input, wo),
-        BandFilter::Highpass(wo) => lp2hp_zpk(input, wo),
-        BandFilter::Bandpass { low, high } => {
+        GenericBandFilter::Lowpass(wo) => lp2lp_zpk(input, wo),
+        GenericBandFilter::Highpass(wo) => lp2hp_zpk(input, wo),
+        GenericBandFilter::Bandpass { low, high } => {
             let bw = high - low;
-            let wo = (high * low).sqrt();
+            let wo = (low * high).sqrt();
             lp2bp_zpk(input, wo, bw)
         }
-        BandFilter::Bandstop { low, high } => {
+        GenericBandFilter::Bandstop { low, high } => {
             let bw = high - low;
-            let wo = (high * low).sqrt();
+            let wo = (low * high).sqrt();
             lp2bs_zpk(input, wo, bw)
         }
     }
 }
 
-pub fn lp2hp_zpk(mut input: Zpk, wo: f64) -> Zpk {
+pub fn lp2hp_zpk<T>(mut input: GenericZpk<T>, wo: T) -> GenericZpk<T>
+where
+    T: Float + Clone,
+{
     let degree = relative_degree(&input);
 
-    let z_prod = input.z.map(|a| -a).product();
-    let p_prod = input.p.map(|a| -a).product();
+    let big_z = &input.z;
+    let big_p = &input.p;
 
-    input.z.mapv_inplace(|a| wo / a);
-    input.p.mapv_inplace(|a| wo / a);
+    let z_prod = big_z.map(|a| -a).product();
+    let p_prod = big_p.map(|a| -a).product();
+
+    input
+        .z
+        .mapv_inplace(|a| <num::Complex<T> as From<T>>::from(wo) / a);
+    input
+        .p
+        .mapv_inplace(|a| <num::Complex<T> as From<T>>::from(wo) / a);
 
     let zeros = vec![Complex::zero(); degree];
     input
@@ -141,98 +186,135 @@ pub fn lp2hp_zpk(mut input: Zpk, wo: f64) -> Zpk {
         .append(Axis(0), ArrayView::from(zeros.as_slice()))
         .unwrap();
 
-    input.k *= (z_prod / p_prod).re;
+    let factor = (z_prod / p_prod).re;
+
+    input.k = input.k * factor;
+    if input.k.is_nan() {
+        println!("lp2hp nan")
+    }
     input
 }
 
-pub fn lp2lp_zpk(mut input: Zpk, wo: f64) -> Zpk {
+pub fn lp2lp_zpk<T>(mut input: GenericZpk<T>, wo: T) -> GenericZpk<T>
+where
+    T: Float,
+{
     let degree = relative_degree(&input);
     input.z.mapv_inplace(|a| a * wo);
     input.p.mapv_inplace(|a| a * wo);
-    input.k = input.k * wo.powi(degree as _);
-    input
-}
-pub fn lp2bp_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
-    let degree = relative_degree(&input);
-    let wo = Complex::from(wo);
-    let bw = Complex::from(bw);
-
-    let z_lp = input.z.mapv(|a| a * Complex::from(bw) / Complex::from(2.0));
-    let p_lp = input.p.mapv(|a| a * Complex::from(bw) / Complex::from(2.0));
-
-    let z_bp1 = z_lp.mapv(|a| a + Complex::from(a.pow(2.0) - wo.pow(2.0)).sqrt());
-
-    let z_bp2 = z_lp.mapv(|a| a - Complex::from(a.pow(2.0) - wo.pow(2.0)).sqrt());
-
-    let z_bp = concatenate![Axis(0), z_bp1, z_bp2];
-
-    let p_bp1 = p_lp.mapv(|a| a + Complex::sqrt(Complex::from(a.powf(2.0) - wo.powf(2.0))));
-
-    let p_bp2 = p_lp.mapv(|a| a - Complex::sqrt(Complex::from(a.powf(2.0) - wo.powf(2.0))));
-
-    let p_bp = concatenate![Axis(0), p_bp1, p_bp2];
-    let z_bp = concatenate![
-        Axis(0),
-        z_bp,
-        Array::from_shape_vec(degree, vec![Complex::<f64>::zero(); degree]).unwrap()
-    ];
-
-    input.k *= bw.powi(degree as _).norm();
-    input.z = z_bp;
-    input.p = p_bp;
+    let res = input.k * wo.powi(degree as _);
+    if res.is_nan() {}
+    input.k = res;
     input
 }
 
-pub fn lp2bs_zpk(mut input: Zpk, wo: f64, bw: f64) -> Zpk {
+pub fn lp2bp_zpk<T>(input: GenericZpk<T>, wo: T, bw: T) -> GenericZpk<T>
+where
+    T: Float,
+{
     let degree = relative_degree(&input);
+    let GenericZpk { z, p, k } = input;
+    let two = T::one() + T::one();
+    let z_lp = z.mapv(|a| a * bw / two);
+    let p_lp = p.mapv(|a| a * bw / two);
 
-    let bw_half = bw / 2.0;
-    let z_hp = input.z.mapv(|a: Complex<f64>| bw_half / a).to_owned();
-    let mut p_hp = Complex::from(bw_half) / input.p.clone();
+    let z_hp_left = &z_lp + (z_lp.mapv(|a| a.powf(two) - wo.powf(two))).mapv(Complex::sqrt);
+    let z_hp_right = &z_lp - (z_lp.mapv(|a| a.powf(two) - wo.powf(two))).mapv(Complex::sqrt);
 
-    // this is weird, i have no idea why but removing this breaks the conversion to BS
-    // Lord forgive me
-    p_hp.mapv_inplace(|mut a| {
-        if a.im == 0.0 {
-            a.im = -0.0;
-        }
-        if a.re == 0.0 {
-            a.re = -0.0;
+    let p_hp_left = &p_lp + (p_lp.mapv(|a| a.powf(two) - wo.powf(two))).mapv(Complex::sqrt);
+    let p_hp_right = &p_lp - (p_lp.mapv(|a| a.powf(two) - wo.powf(two))).mapv(Complex::sqrt);
+
+    let z_bp = concatenate![Axis(0), z_hp_left, z_hp_right];
+    let p_bp = concatenate![Axis(0), p_hp_left, p_hp_right];
+
+    let z_bp = concatenate![Axis(0), z_bp, Array1::zeros(degree)];
+
+    let k_bp = k * bw.powi(degree as _);
+
+    let p_bp = p_bp.mapv(|mut a| {
+        if a.im == T::neg_zero() {
+            a.im = T::zero()
         }
         a
     });
 
-    let z_bs1 = z_hp.map(|a| a + (a.powi(2) - wo.powi(2)).sqrt());
+    GenericZpk {
+        z: z_bp,
+        p: p_bp,
+        k: k_bp,
+    }
+}
 
-    let z_bs2 = z_hp.map(|a| a - (a.powi(2) - wo.powi(2)).sqrt());
+pub fn lp2bs_zpk<T>(input: GenericZpk<T>, wo: T, bw: T) -> GenericZpk<T>
+where
+    T: Float,
+{
+    let degree = relative_degree(&input);
+    let GenericZpk { z, p, k } = input;
 
-    let z_bs = concatenate![Axis(0), z_bs1, z_bs2];
+    let bw_half = bw / T::from(2).unwrap();
+    let bw_half = Complex::new(bw_half, T::zero());
 
-    let wo_squared = Complex::from(wo.pow(2));
+    let z_hp = z.mapv(|a| bw_half / a);
+    let p_hp = p.mapv(|a| bw_half / a);
 
-    let p_bs1 =
-        p_hp.clone() + (p_hp.mapv(|a| Complex::powi(&a, 2)) - wo_squared).mapv(Complex::sqrt);
-    let p_bs2 =
-        p_hp.clone() - (p_hp.mapv(|a| Complex::powi(&a, 2)) - wo_squared).mapv(Complex::sqrt);
+    let z_bs_left = &z_hp + (z_hp.mapv(|a| a.powi(2) - wo.powi(2))).mapv(Complex::sqrt);
+    let z_bs_right = &z_hp - (z_hp.mapv(|a| a.powi(2) - wo.powi(2))).mapv(Complex::sqrt);
 
-    let p_bs = concatenate![Axis(0), p_bs1, p_bs2];
+    let p_bs_left = &p_hp + (p_hp.mapv(|a| a.powi(2) - wo.powi(2))).mapv(Complex::sqrt);
+    let p_bs_right = &p_hp - (p_hp.mapv(|a| a.powi(2) - wo.powi(2))).mapv(Complex::sqrt);
 
+    let dbg_zbs_left = z_bs_left.mapv(|a| {
+        Complex::new(
+            <f64 as NumCast>::from(a.re).unwrap(),
+            <f64 as NumCast>::from(a.im).unwrap(),
+        )
+    });
+
+    let dbg_zbs_right = z_bs_right.mapv(|a| {
+        Complex::new(
+            <f64 as NumCast>::from(a.re).unwrap(),
+            <f64 as NumCast>::from(a.im).unwrap(),
+        )
+    });
+
+    println!("dbg z {dbg_zbs_left:?}");
+    println!("dbg z {dbg_zbs_right:?}");
+
+    let z_bs = concatenate![Axis(0), z_bs_left, z_bs_right];
+    let p_bs = concatenate![Axis(0), p_bs_left, p_bs_right];
+
+    let dbg_zbs = z_bs.mapv(|a| {
+        Complex::new(
+            <f64 as NumCast>::from(a.re).unwrap(),
+            <f64 as NumCast>::from(a.im).unwrap(),
+        )
+    });
+    println!("dbg z {dbg_zbs:?}");
+    let z_bs = concatenate![Axis(0), z_bs, Array1::from_elem(degree, Complex::i() * wo)];
     let z_bs = concatenate![
         Axis(0),
         z_bs,
-        Array::from_shape_vec(degree, vec![Complex::<f64>::new(0.0, wo); degree]).unwrap()
-    ];
-    let z_bs = concatenate![
-        Axis(0),
-        z_bs,
-        Array::from_shape_vec(degree, vec![Complex::<f64>::new(0.0, -wo); degree]).unwrap()
+        Array1::from_elem(degree, Complex::new(T::zero(), -T::one()) * wo)
     ];
 
-    let z_prod = input.z.mapv(|a| -a).product();
-    let p_prod = input.p.map(|a| -a).product();
-    let factor = (z_prod / p_prod).re;
-    input.k *= factor;
-    input.z = z_bs;
-    input.p = p_bs;
-    input
+    println!("degree {degree} p length: {}", p.len());
+
+    let factor = if z.len() == p.len() {
+        (-&z / -&p).product()
+    } else if z.len() > p.len() {
+        let t_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
+        (&-z / t_p).product()
+    } else {
+        let t_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
+        (t_z / -&p).product()
+    };
+
+    let k_bs = k * factor.re;
+
+    GenericZpk {
+        z: z_bs,
+        p: p_bs,
+        k: k_bs,
+    }
 }
