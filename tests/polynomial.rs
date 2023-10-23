@@ -12,7 +12,7 @@ fn polynomial_equal(p1: &Polynomial<f64>, p2: &Polynomial<f64>) -> bool {
 #[test]
 pub fn polynomial_test() {
     let p1 = Polynomial::from(vec![-3.0, 1.0]);
-    let p2 = Polynomial::from_iter(vec![-3.0, 1.0].iter());
+    let p2 = Polynomial::from_iter([-3.0, 1.0].iter());
 
     assert!(polynomial_equal(&p1, &p2));
 

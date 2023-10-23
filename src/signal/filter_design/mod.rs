@@ -34,9 +34,9 @@ pub trait FilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoFilter<T> {
         let settings = self.filter_settings();
         iir_filter(
             proto,
-            settings.order.clone(),
-            settings.band_filter.clone(),
-            settings.analog.clone(),
+            settings.order,
+            settings.band_filter,
+            settings.analog,
             desired_output,
         )
     }

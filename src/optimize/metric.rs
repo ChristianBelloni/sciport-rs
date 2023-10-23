@@ -47,12 +47,12 @@ where
         f.write_fmt(format_args!("MetricType::{}", {
             match self {
                 Self::PNorm(p) => format!("PNorm-{:?}", p),
-                Self::L1Norm => format!("L1-Norm"),
-                Self::L2Norm => format!("L2-Norm"),
-                Self::MS => format!("MS"),
-                Self::RMS => format!("RMS"),
+                Self::L1Norm => "L1-Norm".to_string(),
+                Self::L2Norm => "L2-Norm".to_string(),
+                Self::MS => "MS".to_string(),
+                Self::RMS => "RMS".to_string(),
                 Self::PowerSum(p) => format!("PowerSum-{:?}", p),
-                Self::Custom(_) => format!("Custom"),
+                Self::Custom(_) => "Custom".to_string(),
             }
         }))
     }

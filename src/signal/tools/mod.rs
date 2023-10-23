@@ -31,18 +31,16 @@ where
 
     let factor_map = if z.len() == p.len() {
         z.mapv(|a| -a + fs2) / p.mapv(|a| -a + fs2)
+    } else if z.len() > p.len() {
+        let t_z = z.mapv(|a| -a + fs2);
+        let t_p = p.mapv(|a| -a + fs2);
+        let t_p = concatenate![Axis(0), t_p, Array1::ones(z.len() - p.len())];
+        t_z / t_p
     } else {
-        if z.len() > p.len() {
-            let t_z = z.mapv(|a| -a + fs2);
-            let t_p = p.mapv(|a| -a + fs2);
-            let t_p = concatenate![Axis(0), t_p, Array1::ones(z.len() - p.len())];
-            t_z / t_p
-        } else {
-            let t_z = z.mapv(|a| -a + fs2);
-            let t_p = p.mapv(|a| -a + fs2);
-            let t_z = concatenate![Axis(0), t_z, Array1::ones(p.len() - z.len())];
-            t_z / t_p
-        }
+        let t_z = z.mapv(|a| -a + fs2);
+        let t_p = p.mapv(|a| -a + fs2);
+        let t_z = concatenate![Axis(0), t_z, Array1::ones(p.len() - z.len())];
+        t_z / t_p
     };
 
     let k_z = k * factor_map.product().re;
@@ -55,8 +53,8 @@ where
 }
 
 pub fn relative_degree<T>(input: &GenericZpk<T>) -> usize {
-    let degree = input.p.len() - input.z.len();
-    degree
+    
+    input.p.len() - input.z.len()
 }
 
 /// Compute polynomial coefficients from zeroes
@@ -187,8 +185,8 @@ where
         if generic_approx_complex_relative_slice_eq(
             pos_roots.as_slice(),
             neg_roots.as_slice(),
-            epsilon.into(),
-            epsilon.into(),
+            epsilon,
+            epsilon,
         ) {
             b = b.into_iter().map(|a| a.re.into()).collect();
         }
@@ -213,8 +211,8 @@ where
         if generic_approx_complex_relative_slice_eq(
             pos_roots.as_slice(),
             neg_roots.as_slice(),
-            epsilon.into(),
-            epsilon.into(),
+            epsilon,
+            epsilon,
         ) {
             a = a.into_iter().map(|a| a.re.into()).collect();
         }
@@ -227,8 +225,8 @@ where
     if a[0] == Complex::zero() {
         a.remove_index(Axis(0), 0);
     }
-    let a = a.into();
-    let b = b.into();
+    let a = a;
+    let b = b;
     GenericBa { a, b }
 }
 
@@ -239,8 +237,8 @@ pub fn generic_approx_relative_eq<T: Float + Clone, K: Float + Clone>(
     epsilon: T,
     max_relative: T,
 ) -> bool {
-    let rhs = rhs.clone();
-    let lhs = lhs.clone();
+    let rhs = *rhs;
+    let lhs = *lhs;
     if lhs == T::from(rhs).unwrap() {
         return true;
     }
@@ -270,7 +268,7 @@ pub fn generic_approx_complex_relative_eq<T: Float + Clone, K: Float + Clone>(
     epsilon: T,
     max_relative: T,
 ) -> bool {
-    generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon.clone(), max_relative.clone())
+    generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon, max_relative)
         && generic_approx_relative_eq(&lhs.im, &rhs.im, epsilon, max_relative)
 }
 
@@ -283,7 +281,7 @@ pub fn generic_approx_complex_relative_eq_dbg<
     epsilon: T,
     max_relative: T,
 ) -> bool {
-    let res = generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon.clone(), max_relative.clone())
+    let res = generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon, max_relative)
         && generic_approx_relative_eq(&lhs.im, &rhs.im, epsilon, max_relative);
     if !res {
         println!("difference {:?} {:?}", lhs, rhs);
@@ -299,7 +297,7 @@ pub fn generic_approx_relative_slice_eq<T: Float + Clone>(
 ) -> bool {
     let zip = lhs.iter().zip(rhs.iter());
     zip.fold(true, |acc, (lhs, rhs)| {
-        acc && generic_approx_relative_eq(lhs, rhs, epsilon, max_relative.clone())
+        acc && generic_approx_relative_eq(lhs, rhs, epsilon, max_relative)
     })
 }
 
@@ -311,7 +309,7 @@ pub fn generic_approx_complex_relative_slice_eq<T: Float + Clone, K: Float + Clo
 ) -> bool {
     let zip = lhs.iter().zip(rhs.iter());
     zip.enumerate().fold(true, |acc, (i, (lhs, rhs))| {
-        let new = generic_approx_complex_relative_eq(lhs, rhs, epsilon, max_relative.clone());
+        let new = generic_approx_complex_relative_eq(lhs, rhs, epsilon, max_relative);
         if !new {
             println!("difference at {}", i);
         }
@@ -330,7 +328,7 @@ pub fn generic_approx_complex_relative_slice_eq_dbg<
 ) -> bool {
     let zip = lhs.iter().zip(rhs.iter());
     zip.fold(true, |acc, (lhs, rhs)| {
-        let new = generic_approx_complex_relative_eq_dbg(lhs, rhs, epsilon, max_relative.clone());
+        let new = generic_approx_complex_relative_eq_dbg(lhs, rhs, epsilon, max_relative);
 
         acc && new
     })

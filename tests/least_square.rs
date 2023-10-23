@@ -1,5 +1,5 @@
 use numpy::Complex64;
-use sciport_rs::odr::polynomial::Polynomial;
+
 use sciport_rs::optimize::least_square;
 
 #[test]

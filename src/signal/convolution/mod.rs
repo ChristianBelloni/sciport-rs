@@ -20,7 +20,7 @@ pub fn fft_convolve<N: Num + Copy + Default, D: Dimension>(
         return in1 * in2;
     }
 
-    if in1.len() == 0 || in2.len() == 0 {
+    if in1.is_empty() || in2.is_empty() {
         return Default::default();
     }
 

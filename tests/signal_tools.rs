@@ -37,8 +37,8 @@ fn bad_test() {
     } else {
         return;
     };
-    let b_formatted = filter.b.to_string().replace("i", "j");
-    let a_formatted = filter.a.to_string().replace("i", "j");
+    let b_formatted = filter.b.to_string().replace('i', "j");
+    let a_formatted = filter.a.to_string().replace('i', "j");
     let _zi: Array1<_> = vec![0.0; filter.a.len() - 1].into();
 
     let py_cmd = format!("signal.lfilter({b_formatted}, {a_formatted}, {signal})");

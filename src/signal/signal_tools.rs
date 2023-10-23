@@ -24,8 +24,7 @@ pub(crate) fn c_filt<T: Float>(
                 filter_state[n - 1] = filter_state[n] + signal[i] * b[n] - ret[i] * a[n];
             }
             filter_state[b.len() - 2] = signal[i] * b[b.len() - 1] - ret[i] * a[b.len() - 1];
-        } else {
-        }
+        } 
     }
     ret
 }

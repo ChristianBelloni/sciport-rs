@@ -46,15 +46,15 @@ impl<T: Float> Filter<T> for GenericBa<T> {
         };
 
         if a.len() == 1 {
-            return LFilterOutput {
+            LFilterOutput {
                 filtered: linear_filter(b, a, x, zi),
                 zi: None,
-            };
+            }
         } else {
-            return LFilterOutput {
+            LFilterOutput {
                 filtered: linear_filter(b, a, x, zi),
                 zi: None,
-            };
+            }
         }
     }
 }

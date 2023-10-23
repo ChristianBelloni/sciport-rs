@@ -135,7 +135,7 @@ where
         C: PolynomialCoef + From<T> + Espilon + IntoMetric<M> + IntoComplex<C>,
         M: Metric,
     {
-        polynomial_roots(&self)
+        polynomial_roots(self)
     }
     /// calculate the polynomial least square curve fit on data `x` and `y`
     /// see `sciport_rs::optimize::least_square::poly_fit`
@@ -250,7 +250,7 @@ where
                         "{}{}",
                         c.coef_to_string(),
                         if i == 0 {
-                            format!("")
+                            String::new()
                         } else {
                             format!(" * x^{:<3}", i)
                         }
@@ -288,7 +288,7 @@ where
     T: PolynomialCoef,
 {
     fn from(value: &[T]) -> Self {
-        value.into_iter().collect()
+        value.iter().collect()
     }
 }
 

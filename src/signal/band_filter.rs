@@ -203,7 +203,7 @@ where
     input.z.mapv_inplace(|a| a * wo);
     input.p.mapv_inplace(|a| a * wo);
     let res = input.k * wo.powi(degree as _);
-    if res.is_nan() {}
+    res.is_nan();
     input.k = res;
     input
 }

@@ -63,13 +63,13 @@ impl BracketMethod {
         let (fa, fb) = bracket_f;
 
         if a.is_infinite() || b.is_infinite() {
-            return Some(format!("Bracket must be finite"));
+            return Some("Bracket must be finite".to_string());
         }
         if fa.is_infinite() || fb.is_infinite() {
-            return Some(format!("Bracket must be evaluated to be finite",));
+            return Some("Bracket must be evaluated to be finite".to_string());
         }
         if (fa * fb).is_sign_positive() {
-            return Some(format!("Bracket must be evaluated to be different sign",));
+            return Some("Bracket must be evaluated to be different sign".to_string());
         }
         None
     }
