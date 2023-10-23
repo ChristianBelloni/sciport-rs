@@ -1,16 +1,19 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
 
-pub fn halley_method<C, M>(
-    fun: Rc<dyn Fn(C) -> C>,
-    dfun: Rc<dyn Fn(C) -> C>,
-    ddfun: Rc<dyn Fn(C) -> C>,
+pub fn halley_method<F, FD1, FD2, C, M>(
+    fun: F,
+    dfun: FD1,
+    ddfun: FD2,
     x0: C,
     criteria: Option<OptimizeCriteria<C, C, M>>,
 ) -> OptimizeResult<C, C, C, C, M>
 where
     C: IntoMetric<M> + ComplexFloat + Espilon,
     M: Metric,
+    F: Fn(C) -> C,
+    FD1: Fn(C) -> C,
+    FD2: Fn(C) -> C,
 {
     let evaluator = RootScalarEvaluator::new(criteria);
     let evaluator = Rc::new(RefCell::new(evaluator));
@@ -18,59 +21,53 @@ where
     let fun = {
         let evaluator = evaluator.clone();
         move |x| {
-            (*evaluator).borrow_mut().res.fev();
+            evaluator.borrow_mut().res.fev();
             fun(x)
         }
     };
-    let fun = Box::new(fun);
 
     let dfun = {
         let evaluator = evaluator.clone();
         move |x| {
-            (*evaluator).borrow_mut().res.jev();
+            evaluator.borrow_mut().res.jev();
             dfun(x)
         }
     };
-    let dfun = Box::new(dfun);
 
     let ddfun = {
         let evaluator = evaluator.clone();
         move |x| {
-            (*evaluator).borrow_mut().res.hev();
+            evaluator.borrow_mut().res.hev();
             ddfun(x)
         }
     };
-    let ddfun = Box::new(ddfun);
 
     let solver = NewtonSolver::new(fun, dfun, ddfun, x0);
-    let solver = Box::new(solver) as Box<dyn IterativeSolver<C, C, C, C, M>>;
 
     iterative_optimize(solver, evaluator)
 }
 
-pub struct NewtonSolver<C>
+pub struct NewtonSolver<F, FD1, FD2, C>
 where
     C: ComplexFloat,
 {
-    fun: Box<dyn FnMut(C) -> C>,
-    dfun: Box<dyn FnMut(C) -> C>,
-    ddfun: Box<dyn FnMut(C) -> C>,
+    fun: F,
+    dfun: FD1,
+    ddfun: FD2,
     x0: C,
     f0: C,
     j0: C,
     h0: C,
 }
 
-impl<C> NewtonSolver<C>
+impl<F, FD1, FD2, C> NewtonSolver<F, FD1, FD2, C>
 where
     C: ComplexFloat + Espilon,
+    F: Fn(C) -> C,
+    FD1: Fn(C) -> C,
+    FD2: Fn(C) -> C,
 {
-    fn new(
-        mut fun: Box<dyn FnMut(C) -> C>,
-        mut dfun: Box<dyn FnMut(C) -> C>,
-        mut ddfun: Box<dyn FnMut(C) -> C>,
-        x0: C,
-    ) -> Self {
+    fn new(mut fun: F, mut dfun: FD1, mut ddfun: FD2, x0: C) -> Self {
         let f0 = fun(x0);
         let j0 = dfun(x0);
         let h0 = ddfun(x0);
@@ -87,10 +84,13 @@ where
     }
 }
 
-impl<C, M> IterativeSolver<C, C, C, C, M> for NewtonSolver<C>
+impl<F, FD1, FD2, C, M> IterativeSolver<C, C, C, C, M> for NewtonSolver<F, FD1, FD2, C>
 where
     C: IntoMetric<M> + ComplexFloat + Espilon,
     M: Metric,
+    F: Fn(C) -> C,
+    FD1: Fn(C) -> C,
+    FD2: Fn(C) -> C,
 {
     fn new_solution(&mut self) -> (C, C, Option<C>, Option<C>) {
         self.x0 = self.x0

@@ -1,4 +1,5 @@
 use itertools::{EitherOrBoth, Itertools};
+use nalgebra::{ComplexField, Scalar};
 use num::complex::ComplexFloat;
 use num::Float;
 use std::fmt::{Debug, Display};
@@ -153,11 +154,15 @@ where
 
 impl<T> Polynomial<T>
 where
-    T: PolynomialCoef + 'static,
+    T: PolynomialCoef,
 {
     /// take ownership and package the polynomial into `Rc<dyn Fn(T)->T>`
-    pub fn as_rc(self) -> Rc<dyn Fn(T) -> T> {
+    pub fn as_rc(self) -> Rc<impl Fn(T) -> T> {
         Rc::new(move |x| self.eval(x))
+    }
+
+    pub fn as_fn(self) -> impl Fn(T) -> T {
+        move |x| self.eval(x)
     }
 }
 

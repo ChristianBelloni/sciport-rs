@@ -3,13 +3,14 @@ use std::ops::{Add, Sub};
 use std::rc::Rc;
 
 use num::complex::{Complex32, Complex64, ComplexFloat};
-use num::{Float, One, Zero};
+use num::traits::FloatConst;
+use num::{Complex, Float, NumCast, One, Zero};
 
 /// # `Metric`
 /// `Metric` is trait for float, which all compare the optimizing solution to the allowed tolerance
 ///
 /// It is implemented for `f32` and `f64`
-pub trait Metric: Float + Sized + Clone + Copy + Display + Debug + 'static {}
+pub trait Metric: Float + Sized + Clone {}
 impl Metric for f32 {}
 impl Metric for f64 {}
 
@@ -40,7 +41,7 @@ where
 impl<T, M> Debug for MetricType<T, M>
 where
     T: IntoMetric<M>,
-    M: Metric,
+    M: Metric + Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("MetricType::{}", {
@@ -72,7 +73,7 @@ where
 /// since its nesserary to compare new and old solution in iterative optimization.
 pub trait IntoMetric<M>
 where
-    Self: Sub<Output = Self> + Add<Output = Self> + Sized + Clone + Debug + Display + 'static,
+    Self: Sub<Output = Self> + Add<Output = Self> + Sized + Clone,
     M: Metric,
 {
     /// return the total number of element in the type for calculating mean.
@@ -116,6 +117,48 @@ where
     }
 }
 
+impl<S> IntoMetric<S> for S
+where
+    S: Float + Sized + Clone,
+    S: Metric,
+{
+    fn n(&self) -> S {
+        S::one()
+    }
+
+    fn power_sum(&self, p: S) -> S {
+        self.abs().powf(p)
+    }
+}
+
+impl<S> IntoMetric<S> for Complex<S>
+where
+    S: Float + FloatConst + Sized + Clone,
+    S: Metric,
+{
+    fn n(&self) -> S {
+        S::one()
+    }
+
+    fn power_sum(&self, p: S) -> S {
+        S::from(self.abs().powf(p)).unwrap()
+    }
+}
+
+impl<S, M> IntoMetric<M> for Array1<S>
+where
+    S: IntoMetric<M>,
+    M: Metric,
+{
+    fn n(&self) -> M {
+        M::from(self.len()).unwrap()
+    }
+
+    fn power_sum(&self, p: M) -> M {
+        self.fold(M::zero(), |prd, x| prd + x.power_sum(p))
+    }
+}
+
 /// A macro for implementing `IntoMetric` for `f32`,`f64`, `Complex32` and `Complexf64`, into metric `f32` and `f64` respectively.
 macro_rules! impl_metric_complexfloat {
     ($trait_name:ident,$type_name:ident, $t:ty, $m:ty) => {
@@ -131,10 +174,11 @@ macro_rules! impl_metric_complexfloat {
         pub trait $trait_name: IntoMetric<$m> {}
     };
 }
-impl_metric_complexfloat!(R32IntoMetric, R32MetricType, f32, f32);
-impl_metric_complexfloat!(R64IntoMetric, R64MetricType, f64, f64);
-impl_metric_complexfloat!(Z32IntoMetric, Z32MetricType, Complex32, f32);
-impl_metric_complexfloat!(Z64IntoMetric, Z64MetricType, Complex64, f64);
+
+// impl_metric_complexfloat!(R32IntoMetric, R32MetricType, f32, f32);
+// impl_metric_complexfloat!(R64IntoMetric, R64MetricType, f64, f64);
+// impl_metric_complexfloat!(Z32IntoMetric, Z32MetricType, Complex32, f32);
+// impl_metric_complexfloat!(Z64IntoMetric, Z64MetricType, Complex64, f64);
 
 use ndarray::Array1;
 
@@ -155,17 +199,17 @@ macro_rules! impl_metric_array1 {
     };
 }
 
-impl_metric_array1!(ArrayR32IntoMetric, Array1R32MetricType, Array1<f32>, f32);
-impl_metric_array1!(ArrayR64IntoMetric, Array1R64MetricType, Array1<f64>, f64);
-impl_metric_array1!(
-    ArrayZ32IntoMetric,
-    Array1Z32MetricType,
-    Array1<Complex32>,
-    f32
-);
-impl_metric_array1!(
-    ArrayZ64IntoMetric,
-    Array1Z64MetricType,
-    Array1<Complex64>,
-    f64
-);
+// impl_metric_array1!(ArrayR32IntoMetric, Array1R32MetricType, Array1<f32>, f32);
+// impl_metric_array1!(ArrayR64IntoMetric, Array1R64MetricType, Array1<f64>, f64);
+// impl_metric_array1!(
+//     ArrayZ32IntoMetric,
+//     Array1Z32MetricType,
+//     Array1<Complex32>,
+//     f32
+// );
+// impl_metric_array1!(
+//     ArrayZ64IntoMetric,
+//     Array1Z64MetricType,
+//     Array1<Complex64>,
+//     f64
+// );

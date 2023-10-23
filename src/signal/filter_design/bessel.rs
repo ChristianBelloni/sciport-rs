@@ -1,7 +1,10 @@
+use std::rc::Rc;
+
 use ndarray::{array, Array1};
 use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, One, Zero};
 
 use crate::{
+    optimize::{IntoMetric, Metric},
     signal::{
         output_type::GenericZpk,
         tools::{newton, polyval},
@@ -17,7 +20,9 @@ pub struct BesselFilter<T> {
     pub settings: GenericFilterSettings<T>,
 }
 
-impl<T: Float + FloatConst + ComplexFloat + Clone> ProtoFilter<T> for BesselFilter<T> {
+impl<T: Float + FloatConst + ComplexFloat + Clone + Metric + 'static> ProtoFilter<T>
+    for BesselFilter<T>
+{
     fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
         besselap(self.settings.order, self.norm)
     }
@@ -27,7 +32,7 @@ impl<T: Float + FloatConst + ComplexFloat + Clone> ProtoFilter<T> for BesselFilt
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BesselNorm {
     Phase,
     Delay,
@@ -35,29 +40,59 @@ pub enum BesselNorm {
 }
 
 // TODO! _norm defaults to Phase, other normalizations are not implemented
-pub fn besselap<T: Float + FloatConst>(order: u32, _norm: BesselNorm) -> GenericZpk<T> {
+pub fn besselap<T: Float + FloatConst + Metric + 'static>(
+    order: u32,
+    norm: BesselNorm,
+) -> GenericZpk<T> {
     let z = array![];
     let mut p: Array1<Complex<T>>;
-    let k = T::one();
+    let mut k = T::one();
     if order == 0 {
         p = array![];
     } else {
+        let a_last: T = (_falling_factorial::<T>(2 * order, order)
+            / T::from(2.0).unwrap().powi(order as i32))
+        .floor();
         p = _bessel_zeros::<T>(order)
             .into_iter()
             .map(|a| Complex::new(T::from(1.0).unwrap(), T::zero()) / a)
             .collect();
-        let a_last: T = (_falling_factorial::<T>(2 * order, order)
-            / T::from(2.0).unwrap().powi(order as i32))
-        .floor();
-        p.iter_mut().for_each(|a| {
-            *a = *a
-                * T::from(10.0)
-                    .unwrap()
-                    .powf(-a_last.log10() / T::from(order).unwrap())
-        });
+
+        if norm == BesselNorm::Delay || norm == BesselNorm::Mag {
+            k = a_last;
+            if norm == BesselNorm::Mag {
+                let norm_factor = _norm_factor(p.clone(), k);
+                p = p.mapv(|a| a / norm_factor);
+                k = norm_factor.powf(-T::from(order).unwrap()) * a_last;
+            }
+        } else {
+            p.iter_mut().for_each(|a| {
+                *a = *a
+                    * T::from(10.0)
+                        .unwrap()
+                        .powf(-a_last.log10() / T::from(order).unwrap())
+            });
+        }
     }
     let p = normalize_zeros(p);
     GenericZpk { z, p, k }
+}
+
+fn _norm_factor<T: Float + FloatConst + Metric + 'static>(p: Array1<Complex<T>>, k: T) -> T {
+    let g = move |w: T| {
+        let tmp = p.mapv(|a| Complex::i() * w - a);
+        let tmp = Complex::new(k, T::zero()) / tmp.product();
+        tmp.abs()
+    };
+    let cutoff = move |w: T| g(w) - T::one() / T::from(2).unwrap().sqrt();
+
+    crate::optimize::root_scalar::secant_method(
+        cutoff,
+        T::from(1.5).unwrap(),
+        T::from(1.5 * (1.0 + 1.0e-4)).unwrap(),
+        None,
+    );
+    todo!()
 }
 
 fn _falling_factorial<T: Float>(x: u32, n: u32) -> T {

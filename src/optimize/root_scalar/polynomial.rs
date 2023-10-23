@@ -76,9 +76,9 @@ where
 
             let x0 = C::zero();
 
-            let fun = polynomial.clone().as_rc();
-            let dfun = polynomial.clone().differentiate().as_rc();
-            let ddfun = polynomial.clone().differentiate().differentiate().as_rc();
+            let fun = polynomial.clone().as_fn();
+            let dfun = polynomial.clone().differentiate().as_fn();
+            let ddfun = polynomial.clone().differentiate().differentiate().as_fn();
 
             let res = halley_method(fun, dfun, ddfun, x0, criteria);
 

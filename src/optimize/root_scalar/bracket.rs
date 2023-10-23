@@ -4,13 +4,14 @@ use crate::optimize::*;
 
 use crate::optimize::root_scalar::*;
 
-pub trait BracketSolver<R, M>: IterativeSolver<R, R, R, R, M>
+pub trait BracketSolver<F, R, M>: IterativeSolver<R, R, R, R, M>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R);
-    fn new(fun: Box<dyn FnMut(R) -> R>, bracket_x: (R, R), bracket_f: (R, R)) -> Self
+    fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self
     where
         Self: Sized;
 }
@@ -26,6 +27,32 @@ pub enum BracketMethod {
     Brent,
 }
 
+pub enum BracketMethodSolver<F, R> {
+    Bisect(BisectSolver<F, R>),
+    RegularFalsi(RegularFalsiSolver<F, R>),
+    /// Ridders, C. (1979).
+    /// "A new algorithm for computing a single root of a real continuous function".
+    /// IEEE Transactions on Circuits and Systems. 26: 979–980. doi:10.1109/TCS.1979.1084580
+    Ridder(Ridder<F, R>),
+    Brent(Brent<F, R>),
+}
+
+impl<F, R, M> IterativeSolver<R, R, R, R, M> for BracketMethodSolver<F, R>
+where
+    R: IntoMetric<M> + Float,
+    M: Metric,
+    F: FnMut(R) -> R,
+{
+    fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
+        match self {
+            BracketMethodSolver::Bisect(solver) => solver.new_solution(),
+            BracketMethodSolver::RegularFalsi(solver) => solver.new_solution(),
+            BracketMethodSolver::Ridder(solver) => solver.new_solution(),
+            BracketMethodSolver::Brent(solver) => solver.new_solution(),
+        }
+    }
+}
+
 impl BracketMethod {
     fn valid_bracket<R, M>(bracket_x: (R, R), bracket_f: (R, R)) -> Option<String>
     where
@@ -36,46 +63,41 @@ impl BracketMethod {
         let (fa, fb) = bracket_f;
 
         if a.is_infinite() || b.is_infinite() {
-            return Some(format!("Bracket must be finite: {:?}", (a, b)));
+            return Some(format!("Bracket must be finite"));
         }
         if fa.is_infinite() || fb.is_infinite() {
-            return Some(format!(
-                "Bracket must be evaluated to be finite: {:?}",
-                (fa, fb)
-            ));
+            return Some(format!("Bracket must be evaluated to be finite",));
         }
         if (fa * fb).is_sign_positive() {
-            return Some(format!(
-                "Bracket must be evaluated to be different sign: {:?}",
-                (fa, fb)
-            ));
+            return Some(format!("Bracket must be evaluated to be different sign",));
         }
         None
     }
-    fn get_solver<R, M>(
+    fn get_solver<F: FnMut(R) -> R, R, M>(
         &self,
-        fun: Box<dyn FnMut(R) -> R>,
+        fun: F,
         bracket_x: (R, R),
         bracket_f: (R, R),
-    ) -> Box<dyn IterativeSolver<R, R, R, R, M>>
+    ) -> BracketMethodSolver<F, R>
     where
         R: IntoMetric<M> + Float,
         M: Metric,
     {
         match self {
-            Self::Bisect => Box::new(BisectSolver::new(fun, bracket_x, bracket_f))
-                as Box<dyn IterativeSolver<R, R, R, R, M>>,
-            Self::RegularFalsi => Box::new(RegularFalsiSolver::new(fun, bracket_x, bracket_f))
-                as Box<dyn IterativeSolver<R, R, R, R, M>>,
-            Self::Ridder => Box::new(Ridder::new(fun, bracket_x, bracket_f))
-                as Box<dyn IterativeSolver<R, R, R, R, M>>,
+            Self::Bisect => {
+                BracketMethodSolver::Bisect(BisectSolver::new(fun, bracket_x, bracket_f))
+            }
+            Self::RegularFalsi => BracketMethodSolver::RegularFalsi(RegularFalsiSolver::new(
+                fun, bracket_x, bracket_f,
+            )),
+            Self::Ridder => BracketMethodSolver::Ridder(Ridder::new(fun, bracket_x, bracket_f)),
             _ => todo!(),
         }
     }
 }
 
-pub fn solve_from_bracket<R, M>(
-    fun: Rc<dyn Fn(R) -> R>,
+pub fn solve_from_bracket<F, R, M>(
+    fun: F,
     bracket_method: &BracketMethod,
     bracket: (R, R),
     criteria: Option<OptimizeCriteria<R, R, M>>,
@@ -83,6 +105,7 @@ pub fn solve_from_bracket<R, M>(
 where
     R: IntoMetric<M> + Float + FloatConst,
     M: Metric,
+    F: Fn(R) -> R,
 {
     let evaluator = RootScalarEvaluator::new(criteria);
     let evaluator = Rc::new(RefCell::new(evaluator));
@@ -90,7 +113,7 @@ where
     let fun = {
         let evaluator = evaluator.clone();
         move |x| {
-            (*evaluator).borrow_mut().res.fev();
+            evaluator.borrow_mut().res.fev();
             fun(x)
         }
     };
@@ -100,7 +123,7 @@ where
     let bracket_f = (fun(bracket_x.0), fun(bracket_x.1));
 
     if let Some(msg) = BracketMethod::valid_bracket(bracket_x, bracket_f) {
-        (*evaluator).borrow_mut().res.set_failure(msg);
+        evaluator.borrow_mut().res.set_failure(msg);
     }
 
     let solver = bracket_method.get_solver(fun, bracket_x, bracket_f);
@@ -108,19 +131,21 @@ where
     iterative_optimize(solver, evaluator)
 }
 
-pub struct BisectSolver<R> {
-    fun: Box<dyn FnMut(R) -> R>,
+pub struct BisectSolver<F, R> {
+    fun: F,
     pos: R,
     neg: R,
 }
 
-impl<R, M> BracketSolver<R, M> for BisectSolver<R>
+impl<F, R, M> BracketSolver<F, R, M> for BisectSolver<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
-    fn new(fun: Box<dyn FnMut(R) -> R>, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
+
+    fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
         let (pos, neg) = {
             if bracket_f.0.is_sign_positive() {
                 bracket_x
@@ -131,10 +156,11 @@ where
         Self { fun, pos, neg }
     }
 }
-impl<R, M> IterativeSolver<R, R, R, R, M> for BisectSolver<R>
+impl<F, R, M> IterativeSolver<R, R, R, R, M> for BisectSolver<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
         let x = (self.pos + self.neg) / R::from(2).unwrap();
@@ -155,21 +181,22 @@ where
     (pos_f * neg_x - neg_f * pos_x) / (pos_f - neg_f + R::epsilon())
 }
 
-pub struct RegularFalsiSolver<R> {
-    fun: Box<dyn FnMut(R) -> R>,
+pub struct RegularFalsiSolver<F, R> {
+    fun: F,
     pos_x: R,
     neg_x: R,
     pos_f: R,
     neg_f: R,
 }
 
-impl<R, M> BracketSolver<R, M> for RegularFalsiSolver<R>
+impl<F, R, M> BracketSolver<F, R, M> for RegularFalsiSolver<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
-    fn new(fun: Box<dyn FnMut(R) -> R>, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
+    fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
         let (pos_x, neg_x, pos_f, neg_f) = {
             if bracket_f.0.is_sign_positive() {
                 (bracket_x.0, bracket_x.1, bracket_f.0, bracket_f.1)
@@ -186,10 +213,11 @@ where
         }
     }
 }
-impl<R, M> IterativeSolver<R, R, R, R, M> for RegularFalsiSolver<R>
+impl<F, R, M> IterativeSolver<R, R, R, R, M> for RegularFalsiSolver<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
         let x = regular_falsi(self.pos_x, self.neg_x, self.pos_f, self.neg_f);
@@ -216,21 +244,22 @@ where
     }
 }
 
-pub struct Ridder<R> {
-    fun: Box<dyn FnMut(R) -> R>,
+pub struct Ridder<F, R> {
+    fun: F,
     x0: R,
     x2: R,
     f0: R,
     f2: R,
 }
 
-impl<R, M> BracketSolver<R, M> for Ridder<R>
+impl<F, R, M> BracketSolver<F, R, M> for Ridder<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
-    fn new(fun: Box<dyn FnMut(R) -> R>, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
+    fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
         Self {
             fun,
             x0: bracket_x.0,
@@ -240,10 +269,11 @@ where
         }
     }
 }
-impl<R, M> IterativeSolver<R, R, R, R, M> for Ridder<R>
+impl<F, R, M> IterativeSolver<R, R, R, R, M> for Ridder<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
         let x1 = (self.x0 + self.x2) / R::from(2.0).unwrap();
@@ -274,8 +304,8 @@ where
 }
 
 /// https://mathsfromnothing.au/brents-method/?i=1
-pub struct Brent<R> {
-    fun: Box<dyn FnMut(R) -> R>,
+pub struct Brent<F, R> {
+    fun: F,
     a: R,
     b: R,
     c: R,
@@ -286,13 +316,14 @@ pub struct Brent<R> {
     used_bisect: bool,
 }
 
-impl<R, M> BracketSolver<R, M> for Brent<R>
+impl<F, R, M> BracketSolver<F, R, M> for Brent<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
-    fn new(fun: Box<dyn FnMut(R) -> R>, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
+    fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
         let (mut a, mut b) = bracket_x;
         let (fa, fb) = bracket_f;
 
@@ -315,10 +346,11 @@ where
         }
     }
 }
-impl<R, M> IterativeSolver<R, R, R, R, M> for Brent<R>
+impl<F, R, M> IterativeSolver<R, R, R, R, M> for Brent<F, R>
 where
     R: IntoMetric<M> + Float,
     M: Metric,
+    F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
         let mut s = if self.a != self.b && self.a != self.c {

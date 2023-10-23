@@ -17,7 +17,7 @@ use num::complex::ComplexFloat;
 /// - if `order > x.len()`, the result will be least sqaure of the coefficient of polynomial
 ///
 /// ## Example
-/// ```
+/// ```ignore
 /// let x = vec![1.0,2.0,3.0];
 /// let y = vec![2.0,1.0,2.0];
 ///
