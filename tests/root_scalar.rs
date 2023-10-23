@@ -1,6 +1,5 @@
 use num::complex::Complex64;
 
-
 use sciport_rs::optimize::root_scalar::{
     bracket::BracketMethod, fixed_point_method, halley_method, newton_method, secant_method,
     solve_from_bracket,
@@ -47,13 +46,7 @@ fn root_scalar() {
     println!("{}", res);
 
     print_divider("Halley".to_string());
-    let res = halley_method(
-        fun,
-        dfun,
-        ddfun,
-        x0,
-        criteria.clone(),
-    );
+    let res = halley_method(fun, dfun, ddfun, x0, criteria.clone());
     println!("{}", res);
 
     let fun = |z: Complex64| 2.0 * z.powi(3) - 10.0 * z.powi(2) + 3.0 * z - 15.0;
@@ -75,13 +68,7 @@ fn root_scalar() {
     println!("{}", res);
 
     print_divider("Halley Complex".to_string());
-    let res = halley_method(
-        fun,
-        dfun,
-        ddfun,
-        x0,
-        criteria.clone(),
-    );
+    let res = halley_method(fun, dfun, ddfun, x0, criteria.clone());
     println!("{}", res);
 
     let fun = |x: f64| x.sin();

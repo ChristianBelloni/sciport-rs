@@ -53,7 +53,6 @@ where
 }
 
 pub fn relative_degree<T>(input: &GenericZpk<T>) -> usize {
-    
     input.p.len() - input.z.len()
 }
 

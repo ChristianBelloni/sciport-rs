@@ -1,10 +1,8 @@
-
-
 use ndarray::{array, Array1};
 use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, One, Zero};
 
 use crate::{
-    optimize::{Metric},
+    optimize::Metric,
     signal::{
         output_type::GenericZpk,
         tools::{newton, polyval},

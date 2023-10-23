@@ -325,11 +325,13 @@ where
 
     /// return a `Vec<String>` of all the torlerance that passed
     pub fn satisfied(&self) -> Vec<String> {
-        [(self.satisfy_xatol(), "xatol"),
+        [
+            (self.satisfy_xatol(), "xatol"),
             (self.satisfy_xrtol(), "xrtol"),
             (self.satisfy_fatol(), "fatol"),
             (self.satisfy_frtol(), "frtol"),
-            (self.satisfy_fltol(), "fltol")]
+            (self.satisfy_fltol(), "fltol"),
+        ]
         .iter()
         .filter_map(|(sat, tol)| if !sat { None } else { Some(tol.to_string()) })
         .collect::<Vec<String>>()

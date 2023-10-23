@@ -300,9 +300,7 @@ pub fn barthann(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
 
         let (m, needs_trunc) = extend(m, sym);
 
-        let n = (0..m)
-            .map(|a| a as f64)
-            .collect::<Array1<f64>>();
+        let n = (0..m).map(|a| a as f64).collect::<Array1<f64>>();
         let m = m as f64;
         let fac = (n / (m - 1.0) - 0.5).mapv(|a| a.abs());
         let w =
@@ -429,7 +427,7 @@ pub fn taylor(
             let rhs = 2.0 * PI * ma.slice(s![.., NewAxis]).to_owned() * (n - m as f64 / 2.0 + 0.5)
                 / m as f64;
             let rhs = rhs.mapv(f64::cos);
-            
+
             1.0 + 2.0 * fm.dot(&rhs)
         };
 
