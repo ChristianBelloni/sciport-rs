@@ -84,13 +84,14 @@ fn _norm_factor<T: Float + FloatConst + Metric + 'static>(p: Array1<Complex<T>>,
     };
     let cutoff = move |w: T| g(w) - T::one() / T::from(2).unwrap().sqrt();
 
-    crate::optimize::root_scalar::secant_method(
+    let res = crate::optimize::root_scalar::secant_method(
         cutoff,
         T::from(1.5).unwrap(),
         T::from(1.5 * (1.0 + 1.0e-4)).unwrap(),
         None,
     );
-    todo!()
+
+    res.sol_x.unwrap()
 }
 
 fn _falling_factorial<T: Float>(x: u32, n: u32) -> T {

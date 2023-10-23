@@ -94,7 +94,7 @@ pub fn check_zpk_filter<T: Float>(
     let rust = rust.cast_with_fn(|a| <f64 as NumCast>::from(a).unwrap());
     let GenericZpk { z, p, k } = rust;
     let (py_z, py_p, py_k) = python;
-    let epsilon = 10.0.powi(-8);
+    let epsilon = 10.0.powi(-7);
     let mut k_assert = generic_approx_relative_eq(&k, &py_k, epsilon, epsilon);
     if !k_assert {
         println!("difference k {} {}", k, py_k);

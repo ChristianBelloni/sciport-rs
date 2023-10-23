@@ -14,6 +14,13 @@ fn with_py_test_bessel() {
     for _ in 0..500 {
         let order = rand::thread_rng().gen_range(0..53);
         let kind = rand::thread_rng().gen_range(0..4);
+        let norm = rand::thread_rng().gen_range(0..3);
+        let norm = match norm {
+            0 => BesselNorm::Phase,
+            1 => BesselNorm::Delay,
+            2 => BesselNorm::Mag,
+            _ => unreachable!(),
+        };
 
         let band_filter = match kind {
             0 => BandFilter::Lowpass(rand::thread_rng().gen_range((0.0)..1.0)),
@@ -44,7 +51,7 @@ fn with_py_test_bessel() {
             },
             _ => unreachable!(),
         };
-        test_bessel(order, band_filter, analog);
+        test_bessel(order, band_filter, analog, norm);
     }
 }
 
@@ -64,7 +71,7 @@ fn test_besselap() {
     }
 }
 
-fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog) {
+fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog, norm: BesselNorm) {
     let (wn, btype) = match &band_filter {
         BandFilter::Bandstop { low, high } => (format!("[{low}, {high}]"), "bandstop"),
         BandFilter::Bandpass { low, high } => (format!("[{low}, {high}]"), "bandpass"),
@@ -77,8 +84,14 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog) {
         Analog::False { fs } => ("False", fs.to_string()),
     };
 
+    let py_norm = match &norm {
+        BesselNorm::Phase => "phase",
+        BesselNorm::Delay => "delay",
+        BesselNorm::Mag => "mag",
+    };
+
     let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(
-        "signal.bessel({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs})"
+        "signal.bessel({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs}, norm=\'{py_norm}\')"
     ));
 
     let python = if let Some(p) = python {
@@ -88,7 +101,7 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog) {
     };
 
     let filter = BesselFilter {
-        norm: BesselNorm::Phase,
+        norm,
         settings: GenericFilterSettings {
             order,
             band_filter,
@@ -99,7 +112,7 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog) {
     let rust = filter.filter(DesiredFilterOutput::Zpk).zpk();
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {
-        println!("order {order} filter: {band_filter:#?}, analog {analog:#?}");
+        println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, norm {norm:#?}");
 
         //println!("rust: {:#?}", rust);
         //println!("python: {:#?}", python);
