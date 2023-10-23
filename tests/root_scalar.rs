@@ -96,7 +96,7 @@ fn root_scalar() {
     let res = fixed_point_method(fun.clone(), x0, criteria.clone());
     println!("{}", res);
 
-    let fun = (|x: Complex64| x.sin());
+    let fun = |x: Complex64| x.sin();
     let x0 = Complex64::new(0.5, 0.3);
     let criteria = Some(
         OptimizeCriteria::empty()
