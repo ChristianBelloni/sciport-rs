@@ -2,7 +2,6 @@ mod common;
 use crate::common::check_zpk_filter;
 use common::with_scipy;
 use num::{complex::Complex64, NumCast};
-use num_bigfloat::BigFloat;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
     band_filter::BandFilter, cheby1::*, output_type::DesiredFilterOutput, Analog, FilterDesign,
@@ -60,7 +59,6 @@ fn test_cheb1ap() {
         let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(
             "signal.cheb1ap({i}, rp={rp})"
         ));
-        let rp = BigFloat::from_f64(rp);
         let rust = cheb1ap(i, rp);
         let python = if let Some(p) = python {
             p

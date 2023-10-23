@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
     band_filter::BandFilter,
     butter::*,
-    output_type::{DesiredFilterOutput, FilterOutput, GenericZpk},
+    output_type::{DesiredFilterOutput, FilterOutput},
     tools::zpk2ba,
     Analog, FilterDesign, GenericFilterSettings,
 };

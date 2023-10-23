@@ -4,10 +4,8 @@ use common::with_scipy;
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
-    band_filter::BandFilter,
-    cheby2::*,
-    output_type::{DesiredFilterOutput, Zpk},
-    Analog, FilterDesign, GenericFilterSettings,
+    band_filter::BandFilter, cheby2::*, output_type::DesiredFilterOutput, Analog, FilterDesign,
+    GenericFilterSettings,
 };
 
 #[test]

@@ -1,6 +1,5 @@
-use std::rc::Rc;
-
 use num::complex::Complex64;
+use std::rc::Rc;
 
 use sciport_rs::optimize::root_scalar::{
     bracket::BracketMethod, fixed_point_method, halley_method, newton_method, secant_method,

@@ -1,5 +1,4 @@
-use bigdecimal::num_traits::FloatConst;
-use num::{complex::ComplexFloat, Float};
+use num::{complex::ComplexFloat, traits::FloatConst, Float};
 
 use super::{
     band_filter::GenericBandFilter,

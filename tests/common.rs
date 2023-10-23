@@ -1,18 +1,13 @@
 use std::fmt::Debug;
 
-use approx::{assert_relative_eq, assert_ulps_eq};
-use ndarray::Array1;
 use num::{Float, NumCast};
 use numpy::Complex64;
 use pyo3::prelude::*;
 use pyo3::types::IntoPyDict;
-use sciport_rs::signal::band_filter::{BandFilter, GenericBandFilter};
-use sciport_rs::signal::output_type::{Ba, GenericBa, GenericZpk, Zpk};
+use sciport_rs::signal::output_type::{GenericBa, GenericZpk};
 use sciport_rs::signal::tools::{
-    generic_approx_complex_relative_slice_eq, generic_approx_complex_relative_slice_eq_dbg,
-    generic_approx_relative_eq,
+    generic_approx_complex_relative_slice_eq_dbg, generic_approx_relative_eq,
 };
-use sciport_rs::signal::Analog;
 
 #[macro_export]
 macro_rules! tol {
@@ -88,7 +83,7 @@ impl AlmostEq for f64 {
 pub fn almost_eq<T: AlmostEq + Debug>(lhs: &T, rhs: &T, tol: f64) -> bool {
     lhs.almost_eq(rhs, tol)
 }
-
+#[allow(unused)]
 const MAX_RELATIVE: f64 = 0.01;
 
 #[allow(unused)]

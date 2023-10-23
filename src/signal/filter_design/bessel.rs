@@ -1,6 +1,5 @@
-use bigdecimal::num_traits::FloatConst;
 use ndarray::{array, Array1};
-use num::{complex::ComplexFloat, Complex, Float, NumCast, One, Zero};
+use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, One, Zero};
 
 use crate::{
     signal::{

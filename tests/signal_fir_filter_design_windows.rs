@@ -3,6 +3,7 @@ use rand::Rng;
 mod common;
 use common::with_scipy;
 use sciport_rs::signal::windows::*;
+
 lazy_static! {
     static ref TEST_LEN: u64 = std::option_env!("TEST_LEN")
         .map(str::parse)

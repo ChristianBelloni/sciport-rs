@@ -1,7 +1,5 @@
-use num::complex::ComplexFloat;
-use numpy::Complex64;
+use num::complex::Complex64;
 use sciport_rs::odr::polynomial::Polynomial;
-use sciport_rs::optimize::root_scalar::polynomial_roots;
 
 fn polynomial_equal(p1: &Polynomial<f64>, p2: &Polynomial<f64>) -> bool {
     p1.degree() == p2.degree()
@@ -37,17 +35,20 @@ pub fn polynomial_test() {
 
     let p11 = Polynomial::from_roots_k(vec![1.0, 2.0, 3.0], 1.0);
     let p12 = Polynomial::from(vec![-1.0, 1.0])
-    * Polynomial::from(vec![-2.0, 1.0])
-    * Polynomial::from(vec![-3.0, 1.0]);
+        * Polynomial::from(vec![-2.0, 1.0])
+        * Polynomial::from(vec![-3.0, 1.0]);
     assert!(polynomial_equal(&p11, &p12));
-    
+
     let sol = p11.roots();
     println!("{:?}", sol);
-    
-    let roots = vec![Complex64::new(1.0, 2.0),Complex64::new(2.0, 3.0),Complex64::new(-1.0, -2.0)];
-    let k = Complex64::new(1.0,0.0);
-    let p13 = Polynomial::from_roots_k(roots,k);
+
+    let roots = vec![
+        Complex64::new(1.0, 2.0),
+        Complex64::new(2.0, 3.0),
+        Complex64::new(-1.0, -2.0),
+    ];
+    let k = Complex64::new(1.0, 0.0);
+    let p13 = Polynomial::from_roots_k(roots, k);
     let sol = p13.roots();
     println!("{:?}", sol);
-
 }

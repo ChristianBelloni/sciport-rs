@@ -1,18 +1,14 @@
 mod common;
 
 use approx::assert_relative_eq;
-use ndarray::{array, Array1};
+use ndarray::Array1;
 use numpy::Complex64;
 use sciport_rs::signal::{
-    band_filter::BandFilter,
-    butter::ButterFilter,
-    cheby1::Cheby1Filter,
-    output_type::{Ba, DesiredFilterOutput},
-    windows::WindowType,
-    Analog, FilterDesign, GenericFilterSettings,
+    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput, Analog,
+    FilterDesign, GenericFilterSettings,
 };
 
-use crate::common::{check_ba_filter, with_scipy};
+use crate::common::with_scipy;
 
 #[test]
 fn bad_test() {
@@ -36,14 +32,14 @@ fn bad_test() {
     let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>)>(&format!(
         "signal.butter({order}, 0.05, fs=200)"
     ));
-    let python = if let Some(p) = python {
+    let _python = if let Some(p) = python {
         p
     } else {
         return;
     };
     let b_formatted = filter.b.to_string().replace("i", "j");
     let a_formatted = filter.a.to_string().replace("i", "j");
-    let zi: Array1<_> = vec![0.0; filter.a.len() - 1].into();
+    let _zi: Array1<_> = vec![0.0; filter.a.len() - 1].into();
 
     let py_cmd = format!("signal.lfilter({b_formatted}, {a_formatted}, {signal})");
     let python = with_scipy::<Vec<Complex64>>(&py_cmd);

@@ -1,9 +1,9 @@
 use super::output_type::{GenericBa, GenericZpk};
 use crate::odr::polynomial::Polynomial;
-use bigdecimal::num_traits::FloatConst;
 use ndarray::{array, concatenate, s, Array1, ArrayView1, ArrayViewMut1, Axis};
 use num::{
     complex::{Complex64, ComplexFloat},
+    traits::FloatConst,
     Complex, Float, Num, Zero,
 };
 use std::fmt::Debug;
