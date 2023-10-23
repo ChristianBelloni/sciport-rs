@@ -19,11 +19,11 @@ complex-bessel-rs = { version = "0.0.5" }
 ndarray = { version = "0.15.6", features = ["rayon"] }
 numpy = "0.20.0"
 itertools = "0.11.0"
+nalgebra = "0.32.3"
 approx = { version = "0.5", features = ["num-complex"] }
 bigdecimal = "0.4.1"
 trait-set = "0.3.0"
 num-rational = "0.4"
-
 [dev-dependencies]
 pyo3 = { version = "0.20.0", features = ["full", "auto-initialize"] }
 ndarray = { version = "0.15.6", features = ["rayon", "approx-0_5"] }
