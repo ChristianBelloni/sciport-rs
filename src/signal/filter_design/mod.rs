@@ -9,10 +9,15 @@ use super::{
 
 pub mod bessel;
 pub mod butter;
-pub mod butterord;
+// pub mod butterord;
 pub mod cheby1;
 pub mod cheby2;
-pub mod ellip;
+// pub mod ellip;
+
+pub use bessel::*;
+pub use butter::*;
+pub use cheby1::*;
+pub use cheby2::*;
 
 pub struct GenericIIRFilterSettings<T> {
     pub order: u32,

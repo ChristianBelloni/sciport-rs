@@ -11,16 +11,15 @@ use crate::common::with_scipy;
 #[test]
 fn bad_test() {
     let order = 10;
-    let filter = Cheby1Filter {
+    let filter_gen = Cheby1Filter {
         rp: 1.2,
         settings: GenericIIRFilterSettings {
             order,
             band_filter: BandFilter::Lowpass(0.05),
             analog: Sampling::Digital { fs: 200.0 },
         },
-    }
-    .compute_filter(DesiredFilterOutput::Ba)
-    .ba();
+    };
+    let filter = filter_gen.compute_filter(DesiredFilterOutput::Ba).ba();
 
     println!("filter: {:?}", filter);
 
@@ -52,5 +51,11 @@ fn bad_test() {
 
     let filtered = result.filtered;
 
+    assert_relative_eq!(filtered.to_vec().as_slice(), python.as_slice());
+    let filter = filter_gen.compute_filter(DesiredFilterOutput::Zpk).zpk();
+    let result =
+        sciport_rs::signal::output_type::Filter::lfilter(&filter, signal.mapv(Into::into), None);
+
+    let filtered = result.filtered;
     assert_relative_eq!(filtered.to_vec().as_slice(), python.as_slice());
 }

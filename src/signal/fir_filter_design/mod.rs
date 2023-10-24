@@ -5,7 +5,7 @@ pub mod windows;
 
 pub use tools::*;
 
-use self::windows::WindowType;
+pub use self::windows::WindowType;
 use super::{band_filter::GenericBandFilter, GenericSampling};
 
 pub struct GenericFIRFilterSettings<T> {
@@ -16,3 +16,5 @@ pub struct GenericFIRFilterSettings<T> {
     pub scale: bool,
     pub sampling: GenericSampling<T>,
 }
+
+pub use firwin1::*;

@@ -38,9 +38,9 @@ mod fir_filter_design;
 mod signal_tools;
 
 //pub use convolution::*;
-pub use filter_design::{bessel, butter, cheby1, cheby2};
+pub use filter_design::*;
 
-pub use fir_filter_design::*;
+pub use fir_filter_design::{firwin, Firwin1Filter, GenericFIRFilterSettings, WindowType};
 use trait_set::trait_set;
 
 pub mod band_filter;

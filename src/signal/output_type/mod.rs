@@ -43,7 +43,7 @@ pub enum GenericFilterOutput<T> {
 /// Although the sets of roots are stored as vecs, their ordering does not matter: ([-1, -2], [-3, -4], 1) is the same filter as ([-2, -1], [-4, -3], 1).
 pub type Zpk = GenericZpk<f64>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GenericZpk<T> {
     pub z: Array1<Complex<T>>,
     pub p: Array1<Complex<T>>,
