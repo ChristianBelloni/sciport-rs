@@ -45,6 +45,7 @@ impl<T: Float> Filter<T> for GenericBa<T> {
             Array1::zeros(b.raw_dim() - 1)
         };
 
+        #[allow(clippy::if_same_then_else)]
         if a.len() == 1 {
             LFilterOutput {
                 filtered: linear_filter(b, a, x, zi),
