@@ -29,18 +29,20 @@ where
 
     let z_z = concatenate![Axis(0), z_z, -Array1::ones(degree)];
 
-    let factor_map = if z.len() == p.len() {
-        z.mapv(|a| -a + fs2) / p.mapv(|a| -a + fs2)
-    } else if z.len() > p.len() {
-        let t_z = z.mapv(|a| -a + fs2);
-        let t_p = p.mapv(|a| -a + fs2);
-        let t_p = concatenate![Axis(0), t_p, Array1::ones(z.len() - p.len())];
-        t_z / t_p
-    } else {
-        let t_z = z.mapv(|a| -a + fs2);
-        let t_p = p.mapv(|a| -a + fs2);
-        let t_z = concatenate![Axis(0), t_z, Array1::ones(p.len() - z.len())];
-        t_z / t_p
+    let factor_map = match z.len().cmp(&p.len()) {
+        std::cmp::Ordering::Equal => z.mapv(|a| -a + fs2) / p.mapv(|a| -a + fs2),
+        std::cmp::Ordering::Greater => {
+            let t_z = z.mapv(|a| -a + fs2);
+            let t_p = p.mapv(|a| -a + fs2);
+            let t_p = concatenate![Axis(0), t_p, Array1::ones(z.len() - p.len())];
+            t_z / t_p
+        }
+        std::cmp::Ordering::Less => {
+            let t_z = z.mapv(|a| -a + fs2);
+            let t_p = p.mapv(|a| -a + fs2);
+            let t_z = concatenate![Axis(0), t_z, Array1::ones(p.len() - z.len())];
+            t_z / t_p
+        }
     };
 
     let k_z = k * factor_map.product().re;
@@ -333,7 +335,7 @@ pub fn generic_approx_complex_relative_slice_eq_dbg<
     })
 }
 
-fn sort_complex<T>(cxs: &mut Vec<Complex<T>>)
+fn sort_complex<T>(cxs: &mut [Complex<T>])
 where
     T: Float,
 {

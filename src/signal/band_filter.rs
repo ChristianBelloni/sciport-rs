@@ -299,15 +299,16 @@ where
     ];
 
     println!("degree {degree} p length: {}", p.len());
-
-    let factor = if z.len() == p.len() {
-        (-&z / -&p).product()
-    } else if z.len() > p.len() {
-        let t_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
-        (&-z / t_p).product()
-    } else {
-        let t_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
-        (t_z / -&p).product()
+    let factor = match z.len().cmp(&p.len()) {
+        std::cmp::Ordering::Less => {
+            let t_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
+            (t_z / -&p).product()
+        }
+        std::cmp::Ordering::Equal => (-&z / -&p).product(),
+        std::cmp::Ordering::Greater => {
+            let t_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
+            (&-z / t_p).product()
+        }
     };
 
     let k_bs = k * factor.re;

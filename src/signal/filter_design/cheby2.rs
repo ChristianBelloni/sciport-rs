@@ -74,16 +74,17 @@ pub fn cheb2ap<T: Float>(order: u32, rs: T) -> GenericZpk<T> {
     });
     let p = p.map(Complex::inv);
 
-    let k = if z.len() == p.len() {
-        (-&p / -&z).product()
-    } else if z.len() > p.len() {
-        let tmp_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
-        (tmp_p / -&z).product()
-    } else {
-        let tmp_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
-        (-&p / tmp_z).product()
+    let k = match z.len().cmp(&p.len()) {
+        std::cmp::Ordering::Less => {
+            let tmp_z = concatenate![Axis(0), -&z, Array1::ones(p.len() - z.len())];
+            (-&p / tmp_z).product()
+        }
+        std::cmp::Ordering::Equal => (-&p / -&z).product(),
+        std::cmp::Ordering::Greater => {
+            let tmp_p = concatenate![Axis(0), -&p, Array1::ones(z.len() - p.len())];
+            (tmp_p / -&z).product()
+        }
     }
     .re;
-
     GenericZpk { z, p, k }
 }
