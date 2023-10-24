@@ -1,7 +1,5 @@
-mod common;
-
+use crate::common::with_scipy;
 use crate::common::{check_ba_filter, check_zpk_filter};
-use common::with_scipy;
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
@@ -9,7 +7,7 @@ use sciport_rs::signal::{
     butter::*,
     output_type::{DesiredFilterOutput, FilterOutput},
     tools::zpk2ba,
-    Analog, FilterDesign, GenericFilterSettings,
+    FilterDesign, GenericFilterSettings, Sampling,
 };
 #[test]
 fn with_py_test_butter() {
@@ -40,11 +38,11 @@ fn with_py_test_butter() {
         };
 
         let analog = match rand::thread_rng().gen_range(0..2) {
-            0 => Analog::True,
+            0 => Sampling::Analog,
             1 => {
                 let fs = thread_rng().gen_range((3.0)..15.0);
                 band_filter = band_filter * fs / 2.0;
-                Analog::False { fs }
+                Sampling::Digital { fs }
             }
             _ => unreachable!(),
         };
@@ -79,7 +77,7 @@ fn test_buttap() {
     }
 }
 
-pub fn test_butter(order: u32, band_filter: BandFilter, analog: Analog) {
+pub fn test_butter(order: u32, band_filter: BandFilter, analog: Sampling) {
     let (wn, btype) = match &band_filter {
         BandFilter::Bandstop { low, high } => (format!("[{low}, {high}]"), "bandstop"),
         BandFilter::Bandpass { low, high } => (format!("[{low}, {high}]"), "bandpass"),
@@ -88,8 +86,8 @@ pub fn test_butter(order: u32, band_filter: BandFilter, analog: Analog) {
     };
 
     let (analog_s, fs) = match &analog {
-        Analog::True => ("True", "None".to_string()),
-        Analog::False { fs } => ("False", fs.to_string()),
+        Sampling::Analog => ("True", "None".to_string()),
+        Sampling::Digital { fs } => ("False", fs.to_string()),
     };
 
     let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(

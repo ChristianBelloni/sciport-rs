@@ -1,8 +1,25 @@
-mod common;
-use common::with_scipy;
 use num::Complex;
+use pyo3::{types::IntoPyDict, FromPyObject, Python};
 use rand::Rng;
 
+pub fn with_scipy<T: Clone>(cl: &str) -> Option<T>
+where
+    for<'a> T: FromPyObject<'a>,
+{
+    Python::with_gil(|gil| {
+        let signal = gil.import("scipy.signal").unwrap();
+        let special = gil.import("scipy.special").unwrap();
+        let np = gil.import("numpy").unwrap();
+
+        let globals = [("signal", signal), ("special", special), ("np", np)].into_py_dict(gil);
+
+        let res = gil.eval(cl, globals.into(), None).ok();
+
+        let arr: Option<T> = res.map(|a| a.extract().unwrap());
+
+        arr.clone()
+    })
+}
 #[test]
 pub fn test_i0() {
     for _ in 0..500 {

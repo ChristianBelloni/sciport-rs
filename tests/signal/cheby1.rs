@@ -1,11 +1,10 @@
-mod common;
 use crate::common::check_zpk_filter;
-use common::with_scipy;
+use crate::common::with_scipy;
 use num::{complex::Complex64, NumCast};
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
-    band_filter::BandFilter, cheby1::*, output_type::DesiredFilterOutput, Analog, FilterDesign,
-    GenericFilterSettings,
+    band_filter::BandFilter, cheby1::*, output_type::DesiredFilterOutput, FilterDesign,
+    GenericFilterSettings, Sampling,
 };
 
 #[test]
@@ -38,11 +37,11 @@ fn with_py_test_cheby1() {
         };
 
         let analog = match rand::thread_rng().gen_range(0..2) {
-            0 => Analog::True,
+            0 => Sampling::Analog,
             1 => {
                 let fs = thread_rng().gen_range((100.0)..500.0);
                 band_filter = band_filter * fs / 2.0;
-                Analog::False { fs }
+                Sampling::Digital { fs }
             }
             _ => unreachable!(),
         };
@@ -69,7 +68,7 @@ fn test_cheb1ap() {
     }
 }
 
-fn test_cheby1(order: u32, band_filter: BandFilter, analog: Analog, rp: f64) {
+fn test_cheby1(order: u32, band_filter: BandFilter, analog: Sampling, rp: f64) {
     let (wn, btype) = match &band_filter {
         BandFilter::Bandstop { low, high } => (format!("[{low}, {high}]"), "bandstop"),
         BandFilter::Bandpass { low, high } => (format!("[{low}, {high}]"), "bandpass"),
@@ -78,8 +77,8 @@ fn test_cheby1(order: u32, band_filter: BandFilter, analog: Analog, rp: f64) {
     };
 
     let (analog_s, fs) = match &analog {
-        Analog::True => ("True", "None".to_string()),
-        Analog::False { fs } => ("False", fs.to_string()),
+        Sampling::Analog => ("True", "None".to_string()),
+        Sampling::Digital { fs } => ("False", fs.to_string()),
     };
     let py_code = &format!(
         "signal.cheby1({order}, Wn={wn}, btype=\"{btype}\", output=\"zpk\", analog={analog_s}, fs={fs}, rp={rp})"

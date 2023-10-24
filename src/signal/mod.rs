@@ -50,36 +50,36 @@ pub mod tools;
 pub use filter_design::FilterDesign;
 pub use filter_design::GenericFilterSettings;
 
-pub type Analog = GenericAnalog<f64>;
+pub type Sampling = GenericSampling<f64>;
 
 #[derive(Debug, Clone, Copy)]
-pub enum GenericAnalog<T> {
-    True,
-    False { fs: T },
+pub enum GenericSampling<T> {
+    Analog,
+    Digital { fs: T },
 }
 
-impl<T> GenericAnalog<T> {
+impl<T> GenericSampling<T> {
     pub fn is_analog(&self) -> bool {
         match self {
-            Self::True => true,
-            Self::False { .. } => false,
+            Self::Analog => true,
+            Self::Digital { .. } => false,
         }
     }
 
-    pub fn cast<K>(self) -> GenericAnalog<K>
+    pub fn cast<K>(self) -> GenericSampling<K>
     where
         K: From<T>,
     {
         match self {
-            GenericAnalog::True => GenericAnalog::True,
-            GenericAnalog::False { fs } => GenericAnalog::False { fs: fs.into() },
+            GenericSampling::Analog => GenericSampling::Analog,
+            GenericSampling::Digital { fs } => GenericSampling::Digital { fs: fs.into() },
         }
     }
 
-    pub fn cast_with_fn<K>(self, f: impl Fn(T) -> K) -> GenericAnalog<K> {
+    pub fn cast_with_fn<K>(self, f: impl Fn(T) -> K) -> GenericSampling<K> {
         match self {
-            GenericAnalog::True => GenericAnalog::True,
-            GenericAnalog::False { fs } => GenericAnalog::False { fs: f(fs) },
+            GenericSampling::Analog => GenericSampling::Analog,
+            GenericSampling::Digital { fs } => GenericSampling::Digital { fs: f(fs) },
         }
     }
 }
@@ -95,7 +95,7 @@ pub fn iir_filter<T>(
     proto: GenericZpk<T>,
     _order: u32,
     mut band_filter: GenericBandFilter<T>,
-    mut analog: GenericAnalog<T>,
+    mut analog: GenericSampling<T>,
     desired_output: DesiredFilterOutput,
 ) -> GenericFilterOutput<T>
 where
@@ -105,8 +105,8 @@ where
 
     let mut warped: GenericBandFilter<T> = band_filter;
     match &mut analog {
-        GenericAnalog::True => {}
-        GenericAnalog::False { fs } => {
+        GenericSampling::Analog => {}
+        GenericSampling::Digital { fs } => {
             band_filter = (band_filter * T::from(2).unwrap()) / *fs;
             *fs = T::from(2).unwrap();
             let tmp: GenericBandFilter<_> = ((band_filter * T::from(PI).unwrap()) / *fs).tan();
@@ -116,7 +116,7 @@ where
 
     let mut result = lp2bf_zpk(proto, warped);
 
-    if let GenericAnalog::False { fs } = &analog {
+    if let GenericSampling::Digital { fs } = &analog {
         result = bilinear_zpk(result, *fs);
     }
 

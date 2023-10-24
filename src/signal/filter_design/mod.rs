@@ -4,7 +4,7 @@ use super::{
     band_filter::GenericBandFilter,
     iir_filter,
     output_type::{DesiredFilterOutput, GenericFilterOutput, GenericZpk},
-    GenericAnalog,
+    GenericSampling,
 };
 
 pub mod bessel;
@@ -17,7 +17,7 @@ pub mod ellip;
 pub struct GenericFilterSettings<T> {
     pub order: u32,
     pub band_filter: GenericBandFilter<T>,
-    pub analog: GenericAnalog<T>,
+    pub analog: GenericSampling<T>,
 }
 
 impl<T> GenericFilterSettings<T> {}

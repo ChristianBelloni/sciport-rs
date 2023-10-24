@@ -17,7 +17,9 @@ use num::complex::ComplexFloat;
 /// - if `order > x.len()`, the result will be least sqaure of the coefficient of polynomial
 ///
 /// ## Example
-/// ```ignore
+/// ```
+/// # use sciport_rs::optimize::least_square::poly_fit;
+///
 /// let x = vec![1.0,2.0,3.0];
 /// let y = vec![2.0,1.0,2.0];
 ///

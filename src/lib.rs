@@ -19,15 +19,16 @@
 //! however, a single frequency makes sense only for a subset of btypes and so does a pair,
 //! in our implementation we rewrite this function like:
 //!
-//! ```ignore
-//! fn filter<T>(order: u32, band_filter: BandFilter, analog: Analog) { .. }
+//! ```
+//! # use sciport_rs::signal::Sampling;
+//! # use sciport_rs::signal::band_filter::BandFilter;
+//! fn filter<T>(order: u32, band_filter: BandFilter, analog: Sampling) {  }
 //! ```
 //!
 //! where T represents the output representation of the filter (Zpk, Ba, Sos), band_filter
 //! encapsulates the original Wn and btype like this:
 //!
-//! ```ignore
-//! enum BandFilter
+//! ```
 //!
 //! pub enum BandFilter {
 //!     Highpass(f64),
@@ -40,10 +41,10 @@
 //! and analog encapsulates analog and fs (since a sampling rate makes sense only when talking
 //! about a digital filter) like this:
 //!
-//! ```ignore
-//! pub enum Analog {
-//!     True,
-//!     False {
+//! ```
+//! pub enum Sampling {
+//!     Analog,
+//!     Digital {
 //!         fs: f64
 //!     }
 //! }

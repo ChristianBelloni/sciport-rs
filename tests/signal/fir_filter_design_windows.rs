@@ -1,7 +1,6 @@
+use crate::common::with_scipy;
 use lazy_static::lazy_static;
 use rand::Rng;
-mod common;
-use common::with_scipy;
 use sciport_rs::signal::windows::*;
 
 lazy_static! {

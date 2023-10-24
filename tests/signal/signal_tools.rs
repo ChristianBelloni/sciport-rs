@@ -1,11 +1,9 @@
-mod common;
-
 use approx::assert_relative_eq;
 use ndarray::Array1;
 use numpy::Complex64;
 use sciport_rs::signal::{
-    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput, Analog,
-    FilterDesign, GenericFilterSettings,
+    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput, FilterDesign,
+    GenericFilterSettings, Sampling,
 };
 
 use crate::common::with_scipy;
@@ -18,7 +16,7 @@ fn bad_test() {
         settings: GenericFilterSettings {
             order,
             band_filter: BandFilter::Lowpass(0.05),
-            analog: Analog::False { fs: 200.0 },
+            analog: Sampling::Digital { fs: 200.0 },
         },
     }
     .filter(DesiredFilterOutput::Ba)

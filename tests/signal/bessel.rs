@@ -1,12 +1,11 @@
-mod common;
-
 use crate::common::check_zpk_filter;
-use common::with_scipy;
+use crate::common::with_scipy;
+
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
-    band_filter::BandFilter, bessel::*, output_type::DesiredFilterOutput, Analog, FilterDesign,
-    GenericFilterSettings,
+    band_filter::BandFilter, bessel::*, output_type::DesiredFilterOutput, FilterDesign,
+    GenericFilterSettings, Sampling,
 };
 
 #[test]
@@ -45,8 +44,8 @@ fn with_py_test_bessel() {
         };
 
         let analog = match rand::thread_rng().gen_range(0..2) {
-            0 => Analog::True,
-            1 => Analog::False {
+            0 => Sampling::Analog,
+            1 => Sampling::Digital {
                 fs: thread_rng().gen_range((3.0)..15.0),
             },
             _ => unreachable!(),
@@ -71,7 +70,7 @@ fn test_besselap() {
     }
 }
 
-fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog, norm: BesselNorm) {
+fn test_bessel(order: u32, band_filter: BandFilter, analog: Sampling, norm: BesselNorm) {
     let (wn, btype) = match &band_filter {
         BandFilter::Bandstop { low, high } => (format!("[{low}, {high}]"), "bandstop"),
         BandFilter::Bandpass { low, high } => (format!("[{low}, {high}]"), "bandpass"),
@@ -80,8 +79,8 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Analog, norm: Bessel
     };
 
     let (analog_s, fs) = match &analog {
-        Analog::True => ("True", "None".to_string()),
-        Analog::False { fs } => ("False", fs.to_string()),
+        Sampling::Analog => ("True", "None".to_string()),
+        Sampling::Digital { fs } => ("False", fs.to_string()),
     };
 
     let py_norm = match &norm {

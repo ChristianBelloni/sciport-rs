@@ -1,7 +1,5 @@
-mod common;
-
 use crate::common::check_zpk_filter;
-use common::with_scipy;
+use crate::common::with_scipy;
 use ndarray::Array1;
 use ndarray_rand::RandomExt;
 use num::{complex::Complex64, NumCast};

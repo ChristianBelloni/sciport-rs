@@ -12,9 +12,11 @@ pub fn kv(mut v: f64, mut z: Complex<f64>) -> Complex<f64> {
     if z.is_nan() {
         z = Complex::zero();
     }
+
     if v.is_nan() {
         v = 0.0;
     }
+
     let res = complex_bessel_rs::bessel_k::bessel_k(v, z);
     if res.is_err() {
         println!("{v} {z}");
@@ -28,8 +30,12 @@ pub fn kv(mut v: f64, mut z: Complex<f64>) -> Complex<f64> {
 /// Returns the exponentially scaled, modified Bessel function of the second kind (sometimes called<br/>
 /// the third kind) for real order v at complex z:
 ///
-/// ```ignore
-/// kve(v, z) = kv(v, z) * z.exp()
+/// ```
+/// # use sciport_rs::special::*;
+/// # let v = 1.0;
+/// # let z = num::Complex::new(1.0, 0.0);
+///
+/// assert_eq!(kve(v, z), kv(v, z) * z.exp())
 /// ```
 pub fn kve(v: f64, z: Complex<f64>) -> Complex<f64> {
     kv(v, z) * z.exp()
