@@ -40,7 +40,7 @@ mod signal_tools;
 //pub use convolution::*;
 pub use filter_design::*;
 
-pub use fir_filter_design::{firwin, Firwin1Filter, GenericFIRFilterSettings, WindowType};
+pub use fir_filter_design::{firwin, windows, Firwin1Filter, GenericFIRFilterSettings, WindowType};
 use trait_set::trait_set;
 
 pub mod band_filter;

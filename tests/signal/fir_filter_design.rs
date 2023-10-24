@@ -1,6 +1,6 @@
 use crate::common::with_scipy;
 use rand::Rng;
-use sciport_rs::signal::{band_filter::BandFilter, firwin1::firwin, windows::WindowType, Sampling};
+use sciport_rs::signal::{band_filter::BandFilter, firwin, Sampling, WindowType};
 
 #[test]
 fn test_firwin() {
