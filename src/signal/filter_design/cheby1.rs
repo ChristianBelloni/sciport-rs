@@ -5,19 +5,19 @@ use num::complex::ComplexFloat;
 use num::*;
 use std::f64::consts::PI;
 
-use super::{GenericFilterSettings, ProtoFilter};
+use super::{GenericIIRFilterSettings, ProtoIIRFilter};
 
 pub struct Cheby1Filter<T> {
     pub rp: T,
-    pub settings: GenericFilterSettings<T>,
+    pub settings: GenericIIRFilterSettings<T>,
 }
 
-impl<T: Float + traits::FloatConst + ComplexFloat + Clone> ProtoFilter<T> for Cheby1Filter<T> {
+impl<T: Float + traits::FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T> for Cheby1Filter<T> {
     fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
         cheb1ap(self.settings.order, self.rp)
     }
 
-    fn filter_settings(&self) -> &GenericFilterSettings<T> {
+    fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
         &self.settings
     }
 }

@@ -14,22 +14,20 @@ pub mod cheby1;
 pub mod cheby2;
 pub mod ellip;
 
-pub struct GenericFilterSettings<T> {
+pub struct GenericIIRFilterSettings<T> {
     pub order: u32,
     pub band_filter: GenericBandFilter<T>,
     pub analog: GenericSampling<T>,
 }
 
-impl<T> GenericFilterSettings<T> {}
-
-pub trait ProtoFilter<T: Float + FloatConst + ComplexFloat> {
+pub trait ProtoIIRFilter<T: Float + FloatConst + ComplexFloat> {
     fn proto_filter(&self) -> GenericZpk<T>;
 
-    fn filter_settings(&self) -> &GenericFilterSettings<T>;
+    fn filter_settings(&self) -> &GenericIIRFilterSettings<T>;
 }
 
-pub trait FilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoFilter<T> {
-    fn filter(&self, desired_output: DesiredFilterOutput) -> GenericFilterOutput<T> {
+pub trait IIRFilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoIIRFilter<T> {
+    fn compute_filter(&self, desired_output: DesiredFilterOutput) -> GenericFilterOutput<T> {
         let proto = self.proto_filter();
         let settings = self.filter_settings();
         iir_filter(
@@ -42,4 +40,4 @@ pub trait FilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoFilter<T> {
     }
 }
 
-impl<T: Float + FloatConst + ComplexFloat, K> FilterDesign<T> for K where K: ProtoFilter<T> {}
+impl<T: Float + FloatConst + ComplexFloat, K> IIRFilterDesign<T> for K where K: ProtoIIRFilter<T> {}

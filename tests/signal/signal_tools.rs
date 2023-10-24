@@ -2,8 +2,8 @@ use approx::assert_relative_eq;
 use ndarray::Array1;
 use numpy::Complex64;
 use sciport_rs::signal::{
-    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput, FilterDesign,
-    GenericFilterSettings, Sampling,
+    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput,
+    GenericIIRFilterSettings, IIRFilterDesign, Sampling,
 };
 
 use crate::common::with_scipy;
@@ -13,13 +13,13 @@ fn bad_test() {
     let order = 10;
     let filter = Cheby1Filter {
         rp: 1.2,
-        settings: GenericFilterSettings {
+        settings: GenericIIRFilterSettings {
             order,
             band_filter: BandFilter::Lowpass(0.05),
             analog: Sampling::Digital { fs: 200.0 },
         },
     }
-    .filter(DesiredFilterOutput::Ba)
+    .compute_filter(DesiredFilterOutput::Ba)
     .ba();
 
     println!("filter: {:?}", filter);

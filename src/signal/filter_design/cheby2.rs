@@ -2,19 +2,21 @@ use crate::signal::output_type::GenericZpk;
 use ndarray::{array, concatenate, Array1, Axis};
 use num::{complex::ComplexFloat, Complex, Float};
 
-use super::{GenericFilterSettings, ProtoFilter};
+use super::{GenericIIRFilterSettings, ProtoIIRFilter};
 
 pub struct Cheby2Filter<T> {
     pub rs: T,
-    pub settings: GenericFilterSettings<T>,
+    pub settings: GenericIIRFilterSettings<T>,
 }
 
-impl<T: Float + num::traits::FloatConst + ComplexFloat + Clone> ProtoFilter<T> for Cheby2Filter<T> {
+impl<T: Float + num::traits::FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T>
+    for Cheby2Filter<T>
+{
     fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
         cheb2ap(self.settings.order, self.rs)
     }
 
-    fn filter_settings(&self) -> &GenericFilterSettings<T> {
+    fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
         &self.settings
     }
 }

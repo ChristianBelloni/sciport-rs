@@ -3,8 +3,8 @@ use crate::common::with_scipy;
 use num::{complex::Complex64, NumCast};
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
-    band_filter::BandFilter, cheby1::*, output_type::DesiredFilterOutput, FilterDesign,
-    GenericFilterSettings, Sampling,
+    band_filter::BandFilter, cheby1::*, output_type::DesiredFilterOutput, GenericIIRFilterSettings,
+    IIRFilterDesign, Sampling,
 };
 
 #[test]
@@ -92,14 +92,14 @@ fn test_cheby1(order: u32, band_filter: BandFilter, analog: Sampling, rp: f64) {
 
     let filter = Cheby1Filter {
         rp,
-        settings: GenericFilterSettings {
+        settings: GenericIIRFilterSettings {
             order,
             band_filter,
             analog,
         },
     };
 
-    let rust = filter.filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
 
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {

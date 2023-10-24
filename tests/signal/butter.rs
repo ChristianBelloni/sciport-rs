@@ -7,7 +7,7 @@ use sciport_rs::signal::{
     butter::*,
     output_type::{DesiredFilterOutput, FilterOutput},
     tools::zpk2ba,
-    FilterDesign, GenericFilterSettings, Sampling,
+    GenericIIRFilterSettings, IIRFilterDesign, Sampling,
 };
 #[test]
 fn with_py_test_butter() {
@@ -100,13 +100,13 @@ pub fn test_butter(order: u32, band_filter: BandFilter, analog: Sampling) {
     };
 
     let filter = ButterFilter {
-        settings: GenericFilterSettings {
+        settings: GenericIIRFilterSettings {
             order,
             band_filter,
             analog,
         },
     };
-    let rust = filter.filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
 
     if rust.z.len() != python.0.len() {
         panic!()

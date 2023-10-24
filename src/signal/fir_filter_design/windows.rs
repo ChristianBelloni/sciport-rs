@@ -1,11 +1,12 @@
 use ndarray::Array1;
 use ndarray::{array, s, NewAxis};
+use num::{Float, NumCast};
 use std::{f64::consts::PI, ops::Div};
 
 use crate::{if_len_guard, special::sinc};
 
 #[allow(unused)]
-pub enum WindowType {
+pub enum WindowType<T> {
     Boxcar,
     Triang,
     Blackman,
@@ -20,48 +21,108 @@ pub enum WindowType {
     Barthann,
     Cosine,
     Exponential {
-        center: Option<f64>,
-        tau: Option<f64>,
+        center: Option<T>,
+        tau: Option<T>,
     },
     Tukey {
-        alpha: Option<f64>,
+        alpha: Option<T>,
     },
     Taylor {
         nbar: Option<u64>,
-        sll: Option<f64>,
+        sll: Option<T>,
         norm: Option<bool>,
     },
     Lanczos,
     Kaiser {
-        beta: f64,
+        beta: T,
     },
     KaiserBesselDerived {
-        beta: f64,
+        beta: T,
     },
     Gaussian {
-        std_dev: f64,
+        std_dev: T,
     },
     GeneralCosine {
-        coeffs: Array1<f64>,
+        coeffs: Array1<T>,
     },
     GeneralGaussian {
-        power: f64,
-        width: f64,
+        power: T,
+        width: T,
     },
     Dpss {
-        half_bandwidth: f64,
+        half_bandwidth: T,
     },
     Chebwin {
-        attenuation: f64,
+        attenuation: T,
     },
 }
 
-#[allow(unused)]
-pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>) -> Array1<f64> {
+impl<T: Float> WindowType<T> {
+    pub fn cast<K: NumCast>(self) -> WindowType<K> {
+        match self {
+            WindowType::Boxcar => WindowType::Boxcar,
+            WindowType::Triang => WindowType::Triang,
+            WindowType::Blackman => WindowType::Blackman,
+            WindowType::Hamming => WindowType::Hamming,
+            WindowType::Hann => WindowType::Hann,
+            WindowType::Bartlett => WindowType::Bartlett,
+            WindowType::FlatTop => WindowType::FlatTop,
+            WindowType::Parzen => WindowType::Parzen,
+            WindowType::Bohman => WindowType::Bohman,
+            WindowType::BlackmanHarris => WindowType::BlackmanHarris,
+            WindowType::Nuttall => WindowType::Nuttall,
+            WindowType::Barthann => WindowType::Barthann,
+            WindowType::Cosine => WindowType::Cosine,
+            WindowType::Lanczos => WindowType::Lanczos,
+            WindowType::Exponential { center, tau } => WindowType::Exponential {
+                center: center.map(|a| K::from(a).unwrap()),
+                tau: tau.map(|a| K::from(a).unwrap()),
+            },
+            WindowType::Tukey { alpha } => WindowType::Tukey {
+                alpha: alpha.map(|a| K::from(a).unwrap()),
+            },
+            WindowType::Taylor { nbar, sll, norm } => WindowType::Taylor {
+                nbar,
+                sll: sll.map(|a| K::from(a).unwrap()),
+                norm,
+            },
+            WindowType::Kaiser { beta } => WindowType::Kaiser {
+                beta: K::from(beta).unwrap(),
+            },
+            WindowType::KaiserBesselDerived { beta } => WindowType::KaiserBesselDerived {
+                beta: K::from(beta).unwrap(),
+            },
+            WindowType::Gaussian { std_dev } => WindowType::Gaussian {
+                std_dev: K::from(std_dev).unwrap(),
+            },
+            WindowType::GeneralCosine { coeffs } => WindowType::GeneralCosine {
+                coeffs: coeffs.mapv(|a| K::from(a).unwrap()),
+            },
+            WindowType::GeneralGaussian { power, width } => WindowType::GeneralGaussian {
+                power: K::from(power).unwrap(),
+                width: K::from(width).unwrap(),
+            },
+            WindowType::Dpss { half_bandwidth } => WindowType::Dpss {
+                half_bandwidth: K::from(half_bandwidth).unwrap(),
+            },
+            WindowType::Chebwin { attenuation } => WindowType::Chebwin {
+                attenuation: K::from(attenuation).unwrap(),
+            },
+        }
+    }
+}
+
+// TODO! actually implement generic window selection
+pub fn get_window<T: Float>(
+    window: WindowType<T>,
+    nx: u64,
+    fftbins: impl Into<Option<bool>>,
+) -> Array1<T> {
     let fftbins = fftbins.into().unwrap_or(true);
     let m = nx;
     let sym = !fftbins;
-    match window {
+    let window = window.cast::<f64>();
+    let tmp: Array1<f64> = match window {
         WindowType::Boxcar => boxcar(m, sym),
         WindowType::Triang => triang(m, sym),
         WindowType::Blackman => blackman(m, sym),
@@ -86,11 +147,12 @@ pub fn get_window(window: WindowType, nx: u64, fftbins: impl Into<Option<bool>>)
         WindowType::GeneralGaussian { power, width } => general_gaussian(m, power, width, sym),
         WindowType::Dpss { half_bandwidth } => todo!(),
         WindowType::Chebwin { attenuation } => todo!(),
-    }
+    };
+    tmp.mapv(T::from).mapv(Option::unwrap)
 }
 
-pub fn boxcar(m: u64, sym: impl Into<Option<bool>>) -> Array1<f64> {
-    fn _boxcar(m: u64, sym: bool) -> Array1<f64> {
+pub fn boxcar<T: Float>(m: u64, sym: impl Into<Option<bool>>) -> Array1<T> {
+    fn _boxcar<T: Float>(m: u64, sym: bool) -> Array1<T> {
         if_len_guard!(m);
 
         let (m, needs_trunc) = extend(m, sym);
@@ -571,8 +633,8 @@ pub fn extend(m: u64, sym: bool) -> (u64, bool) {
     }
 }
 
-pub fn truncate(w: impl Into<Array1<f64>>, needs_trunc: bool) -> Array1<f64> {
-    fn inner(w: Array1<f64>, needed: bool) -> Array1<f64> {
+pub fn truncate<T: Float>(w: impl Into<Array1<T>>, needs_trunc: bool) -> Array1<T> {
+    fn inner<T: Float>(w: Array1<T>, needed: bool) -> Array1<T> {
         if needed {
             let mut inner = w.to_vec();
             inner.remove(inner.len() - 1);

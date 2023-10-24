@@ -11,21 +11,21 @@ use crate::{
     tools::complex::normalize_zeros,
 };
 
-use super::{GenericFilterSettings, ProtoFilter};
+use super::{GenericIIRFilterSettings, ProtoIIRFilter};
 
 pub struct BesselFilter<T> {
     pub norm: BesselNorm,
-    pub settings: GenericFilterSettings<T>,
+    pub settings: GenericIIRFilterSettings<T>,
 }
 
-impl<T: Float + FloatConst + ComplexFloat + Clone + Metric + 'static> ProtoFilter<T>
+impl<T: Float + FloatConst + ComplexFloat + Clone + Metric + 'static> ProtoIIRFilter<T>
     for BesselFilter<T>
 {
     fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
         besselap(self.settings.order, self.norm)
     }
 
-    fn filter_settings(&self) -> &GenericFilterSettings<T> {
+    fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
         &self.settings
     }
 }

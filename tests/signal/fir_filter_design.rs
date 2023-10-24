@@ -1,6 +1,6 @@
 use crate::common::with_scipy;
 use rand::Rng;
-use sciport_rs::signal::{band_filter::BandFilter, firwin1::firwin, windows::WindowType};
+use sciport_rs::signal::{band_filter::BandFilter, firwin1::firwin, windows::WindowType, Sampling};
 
 #[test]
 fn test_firwin() {
@@ -40,11 +40,18 @@ fn test_firwin() {
             BandFilter::Lowpass(data) => (format!("{data}"), "lowpass"),
             BandFilter::Highpass(data) => (format!("{data}"), "highpass"),
         };
-        let rust_res = firwin(numtaps, cutoff, None, WindowType::Hamming, true, None)
-            .ba()
-            .b
-            .mapv(|a| a.re)
-            .to_vec();
+        let rust_res = firwin(
+            numtaps,
+            cutoff,
+            None,
+            WindowType::Hamming,
+            true,
+            Sampling::Analog,
+        )
+        .ba()
+        .b
+        .mapv(|a| a.re)
+        .to_vec();
 
         let py_script = format!("signal.firwin({numtaps}, {wn}, pass_zero=\"{btype}\")");
 

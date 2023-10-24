@@ -4,8 +4,8 @@ use crate::common::with_scipy;
 use num::complex::Complex64;
 use rand::{thread_rng, Rng};
 use sciport_rs::signal::{
-    band_filter::BandFilter, bessel::*, output_type::DesiredFilterOutput, FilterDesign,
-    GenericFilterSettings, Sampling,
+    band_filter::BandFilter, bessel::*, output_type::DesiredFilterOutput, GenericIIRFilterSettings,
+    IIRFilterDesign, Sampling,
 };
 
 #[test]
@@ -101,14 +101,14 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Sampling, norm: Bess
 
     let filter = BesselFilter {
         norm,
-        settings: GenericFilterSettings {
+        settings: GenericIIRFilterSettings {
             order,
             band_filter,
             analog,
         },
     };
 
-    let rust = filter.filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {
         println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, norm {norm:#?}");

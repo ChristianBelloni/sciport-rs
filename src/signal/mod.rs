@@ -47,8 +47,8 @@ pub mod band_filter;
 pub mod output_type;
 pub mod tools;
 
-pub use filter_design::FilterDesign;
-pub use filter_design::GenericFilterSettings;
+pub use filter_design::GenericIIRFilterSettings;
+pub use filter_design::IIRFilterDesign;
 
 pub type Sampling = GenericSampling<f64>;
 
