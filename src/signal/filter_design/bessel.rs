@@ -18,9 +18,7 @@ pub struct BesselFilter<T> {
     pub settings: GenericIIRFilterSettings<T>,
 }
 
-impl<T: Float + FloatConst + ComplexFloat + Clone + Metric + 'static> ProtoIIRFilter<T>
-    for BesselFilter<T>
-{
+impl<T: Float + FloatConst + ComplexFloat + Clone + Metric> ProtoIIRFilter<T> for BesselFilter<T> {
     fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
         besselap(self.settings.order, self.norm)
     }
@@ -38,10 +36,7 @@ pub enum BesselNorm {
 }
 
 // TODO! _norm defaults to Phase, other normalizations are not implemented
-pub fn besselap<T: Float + FloatConst + Metric + 'static>(
-    order: u32,
-    norm: BesselNorm,
-) -> GenericZpk<T> {
+pub fn besselap<T: Float + FloatConst + Metric>(order: u32, norm: BesselNorm) -> GenericZpk<T> {
     let z = array![];
     let mut p: Array1<Complex<T>>;
     let mut k = T::one();

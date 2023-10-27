@@ -1,13 +1,12 @@
-use ndarray::{array, concatenate, s, Array1, Axis, Ix1};
-use num::{Complex, Float, One, Zero};
-
 use crate::{
     signal::{
         signal_tools::linear_filter,
         tools::{zpk2ba, Zpk2Ba},
     },
-    tools::convolve,
+    tools::convolve1d,
 };
+use ndarray::{Array1, Ix1};
+use num::{Complex, Float, Zero};
 
 use super::{Filter, GenericBa, GenericZpk, LFilterOutput};
 
@@ -48,11 +47,10 @@ impl<T: Float> Filter<T> for GenericBa<T> {
             Array1::zeros(b.raw_dim() - 1)
         };
 
-        #[allow(clippy::if_same_then_else)]
         if a.len() == 1 {
             let b = b.mapv(|e| e / a[0]);
 
-            let out_full = convolve(x.view(), b.view());
+            let out_full = convolve1d(x.view(), b.view());
 
             LFilterOutput {
                 filtered: out_full,

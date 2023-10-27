@@ -3,12 +3,12 @@ use num::{Complex, Float};
 
 pub(crate) mod complex;
 
-pub fn convolve<T: Float>(
+pub fn convolve1d<T: Float>(
     data: ArrayView1<Complex<T>>,
     window: ArrayView1<Complex<T>>,
 ) -> Array1<Complex<T>> {
     if window.len() > data.len() {
-        return convolve(window, data);
+        return convolve1d(window, data);
     }
     let data = concatenate![Axis(0), Array1::zeros(window.len() - 1), data,];
     let mut w = window.view();
