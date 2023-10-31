@@ -27,8 +27,7 @@ fn bad_test() {
     println!("filter: {:?}", filter);
 
     let signal = Array1::linspace(-1.0, 1.0, 200);
-    let result =
-        sciport_rs::signal::output_type::Filter::lfilter(&filter, signal.mapv(Into::into), None);
+    let result = sciport_rs::signal::Filter::lfilter(&filter, signal.mapv(Into::into), None);
 
     let b_formatted = filter.b.to_string().replace('i', "j");
     let a_formatted = filter.a.to_string().replace('i', "j");

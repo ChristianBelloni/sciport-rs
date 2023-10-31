@@ -1,8 +1,11 @@
-use ndarray::{Array, Array1, Dimension, Ix1};
+use ndarray::{Array1, Ix1};
 use num::{traits::FloatConst, Complex, Float};
 use trait_set::trait_set;
 
-use super::tools::{zpk2ba, Zpk2Ba};
+use super::{
+    tools::{zpk2ba, Zpk2Ba},
+    Filter, LFilterOutput,
+};
 mod ba;
 mod sos;
 mod zpk;
@@ -153,20 +156,6 @@ impl<T: Clone> GenericBa<T> {
 
 #[derive(Debug, Clone)]
 pub struct Sos {}
-
-pub trait Filter<T> {
-    fn lfilter(
-        &self,
-        x: Array1<Complex<T>>,
-        zi: Option<Array1<Complex<T>>>,
-    ) -> LFilterOutput<T, Ix1>;
-}
-
-#[derive(Debug, Clone)]
-pub struct LFilterOutput<T, D: Dimension> {
-    pub filtered: Array<Complex<T>, D>,
-    pub zi: Option<Array<Complex<T>, D>>,
-}
 
 impl<T: Float + FloatConst> Filter<T> for GenericFilterOutput<T> {
     fn lfilter(

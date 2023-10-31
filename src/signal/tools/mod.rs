@@ -115,38 +115,6 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
     polyval(v.into(), tmp)
 }
 
-pub fn newton<T: Float + FloatConst>(
-    f: impl Fn(Complex<T>) -> Complex<T>,
-    fp: impl Fn(Complex<T>) -> Complex<T>,
-    mut x0: Complex<T>,
-    tol: T,
-    maxiter: usize,
-) -> Complex<T> {
-    for _ in 0..maxiter {
-        let fval = f(x0);
-
-        //if fval == 0.0 {}
-
-        let fder = fp(x0);
-        let newton_step = fval / fder;
-        let x = x0 - newton_step;
-
-        if is_close(x, x0, tol) {
-            return x;
-        }
-        x0 = x;
-    }
-
-    panic!()
-}
-
-fn is_close<T: Float + FloatConst>(x: Complex<T>, y: Complex<T>, tol: T) -> bool {
-    let df = x - y;
-    let a = df.abs();
-
-    a < tol
-}
-
 trait_set! {
     pub trait Zpk2Ba = Float + FloatConst + ComplexFloat;
 }

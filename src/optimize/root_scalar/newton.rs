@@ -8,7 +8,7 @@ pub fn newton_method<F, FD, C, M>(
     criteria: Option<OptimizeCriteria<C, C, M>>,
 ) -> OptimizeResult<C, C, C, C, M>
 where
-    C: IntoMetric<M> + ComplexFloat + Espilon,
+    C: IntoMetric<M> + ComplexFloat,
     M: Metric,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
@@ -50,7 +50,7 @@ where
 
 impl<F, FD, C> NewtonSolver<F, FD, C>
 where
-    C: ComplexFloat + Espilon,
+    C: ComplexFloat,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
 {
@@ -70,13 +70,13 @@ where
 
 impl<F, FD, C, M> IterativeSolver<C, C, C, C, M> for NewtonSolver<F, FD, C>
 where
-    C: IntoMetric<M> + ComplexFloat + Espilon,
+    C: IntoMetric<M> + ComplexFloat,
     M: Metric,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
 {
     fn new_solution(&mut self) -> (C, C, Option<C>, Option<C>) {
-        self.x0 = self.x0 - (self.f0) / (self.j0 + C::epsilon());
+        self.x0 = self.x0 - (self.f0) / (self.j0 + C::from(<f64 as Float>::epsilon()).unwrap());
         self.f0 = (self.fun)(self.x0);
         self.j0 = (self.dfun)(self.x0);
 

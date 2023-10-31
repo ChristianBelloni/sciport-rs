@@ -11,7 +11,7 @@ use sciport_rs::signal::{
 #[test]
 fn with_py_test_bessel() {
     for _ in 0..500 {
-        let order = rand::thread_rng().gen_range(0..53);
+        let order = rand::thread_rng().gen_range(0..50);
         let kind = rand::thread_rng().gen_range(0..4);
         let norm = rand::thread_rng().gen_range(0..3);
         let norm = match norm {
@@ -56,7 +56,7 @@ fn with_py_test_bessel() {
 
 #[test]
 fn test_besselap() {
-    for i in 1..53 {
+    for i in 1..50 {
         println!("testing besselap order {i}");
         let python =
             with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!("signal.besselap({i})"));

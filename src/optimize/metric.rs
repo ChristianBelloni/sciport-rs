@@ -133,7 +133,7 @@ where
 
 impl<S> IntoMetric<S> for Complex<S>
 where
-    S: Float + FloatConst + Sized + Clone,
+    S: Float + FloatConst,
     S: Metric,
 {
     fn n(&self) -> S {

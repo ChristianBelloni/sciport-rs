@@ -3,10 +3,7 @@ use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, On
 
 use crate::{
     optimize::Metric,
-    signal::{
-        output_type::GenericZpk,
-        tools::{newton, polyval},
-    },
+    signal::{output_type::GenericZpk, tools::polyval},
     special::kve,
     tools::complex::normalize_zeros,
 };
@@ -71,7 +68,7 @@ pub fn besselap<T: Float + FloatConst + Metric>(order: u32, norm: BesselNorm) ->
     GenericZpk { z, p, k }
 }
 
-fn _norm_factor<T: Float + FloatConst + Metric + 'static>(p: Array1<Complex<T>>, k: T) -> T {
+fn _norm_factor<T: Float + FloatConst + Metric>(p: Array1<Complex<T>>, k: T) -> T {
     let g = move |w: T| {
         let tmp = p.mapv(|a| Complex::i() * w - a);
         let tmp = Complex::new(k, T::zero()) / tmp.product();
@@ -98,7 +95,7 @@ fn _falling_factorial<T: Float>(x: u32, n: u32) -> T {
     T::from(y).unwrap()
 }
 
-fn _bessel_zeros<T: Float + FloatConst>(order: u32) -> Array1<Complex<T>> {
+fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(order: u32) -> Array1<Complex<T>> {
     if order == 0 {
         return array![];
     }
@@ -129,7 +126,9 @@ fn _bessel_zeros<T: Float + FloatConst>(order: u32) -> Array1<Complex<T>> {
     let mut x = _aberth(f, fp, &x0);
 
     for i in &mut x {
-        *i = newton(f, fp, *i, T::from(10.0_f64.powi(-16)).unwrap(), 50);
+        let result = crate::optimize::root_scalar::newton::newton_method(f, fp, *i, None);
+
+        *i = result.sol_x.unwrap();
     }
 
     let clone = x.clone().into_iter().map(|a| a.conj()).rev();
@@ -151,8 +150,8 @@ fn _aberth<
 ) -> Vec<Complex<T>> {
     let mut zs = x0.to_vec();
     let mut new_zs = zs.clone();
-    let tol = T::from(10.0_f64.powi(-16)).unwrap();
-    'iteration: for _ in 0..100 {
+    let tol = T::from(1e-16).unwrap();
+    'iteration: loop {
         for i in 0..(x0.len()) {
             let p_of_z = f(zs[i]);
             let dydx_of_z = fp(zs[i]);

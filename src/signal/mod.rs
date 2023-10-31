@@ -26,14 +26,9 @@
 //!
 //! The documentation on this page is largely been copied from the [SciPy](https://docs.scipy.org/doc/scipy/tutorial/signal.html) documentation
 
-use self::{
-    band_filter::{lp2bf_zpk, BandFilter, GenericBandFilter},
-    output_type::{DesiredFilterOutput, FilterGetOutputBounds, GenericFilterOutput, GenericZpk},
-    tools::bilinear_zpk,
-};
-
 mod convolution;
 mod filter_design;
+#[allow(unused)]
 mod fir_filter_design;
 mod signal_tools;
 
@@ -41,12 +36,14 @@ mod signal_tools;
 pub use filter_design::*;
 
 pub use fir_filter_design::{firwin, windows, Firwin1Filter, GenericFIRFilterSettings, WindowType};
-use trait_set::trait_set;
+use ndarray::{Array, Array1, Dimension, Ix1};
+use num::Complex;
 
 pub mod band_filter;
 pub mod output_type;
 pub mod tools;
 
+pub use band_filter::{BandFilter, GenericBandFilter};
 pub use filter_design::GenericIIRFilterSettings;
 pub use filter_design::IIRFilterDesign;
 
@@ -84,41 +81,16 @@ impl<T> GenericSampling<T> {
     }
 }
 
-trait_set! {
-    pub trait IIRFilterBounds = FilterGetOutputBounds;
+pub trait Filter<T> {
+    fn lfilter(
+        &self,
+        x: Array1<Complex<T>>,
+        zi: Option<Array1<Complex<T>>>,
+    ) -> LFilterOutput<T, Ix1>;
 }
 
-/// Generic iir_filter
-///
-/// Takes a filter prototype and returns the final filter in the desired output
-pub fn iir_filter<T>(
-    proto: GenericZpk<T>,
-    _order: u32,
-    mut band_filter: GenericBandFilter<T>,
-    mut analog: GenericSampling<T>,
-    desired_output: DesiredFilterOutput,
-) -> GenericFilterOutput<T>
-where
-    T: IIRFilterBounds,
-{
-    use std::f64::consts::PI;
-
-    let mut warped: GenericBandFilter<T> = band_filter;
-    match &mut analog {
-        GenericSampling::Analog => {}
-        GenericSampling::Digital { fs } => {
-            band_filter = (band_filter * T::from(2).unwrap()) / *fs;
-            *fs = T::from(2).unwrap();
-            let tmp: GenericBandFilter<_> = ((band_filter * T::from(PI).unwrap()) / *fs).tan();
-            warped = tmp * T::from(4).unwrap();
-        }
-    }
-
-    let mut result = lp2bf_zpk(proto, warped);
-
-    if let GenericSampling::Digital { fs } = &analog {
-        result = bilinear_zpk(result, *fs);
-    }
-
-    GenericFilterOutput::get_output(result, desired_output)
+#[derive(Debug, Clone)]
+pub struct LFilterOutput<T, D: Dimension> {
+    pub filtered: Array<Complex<T>, D>,
+    pub zi: Option<Array<Complex<T>, D>>,
 }

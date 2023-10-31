@@ -9,7 +9,7 @@ pub fn secant_method<F, C, M>(
 ) -> OptimizeResult<C, C, C, C, M>
 where
     C: IntoMetric<M> + ComplexFloat,
-    M: Metric + 'static,
+    M: Metric,
     F: Fn(C) -> C,
 {
     let evaluator = RootScalarEvaluator::new(criteria);
