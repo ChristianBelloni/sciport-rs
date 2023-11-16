@@ -58,7 +58,7 @@ fn test_cheb1ap() {
         let python = with_scipy::<(Vec<Complex64>, Vec<Complex64>, f64)>(&format!(
             "signal.cheb1ap({i}, rp={rp})"
         ));
-        let rust = cheb1ap(i, rp);
+        let rust = cheb1ap(i, rp).expect("valid filter output");
         let python = if let Some(p) = python {
             p
         } else {
@@ -99,7 +99,10 @@ fn test_cheby1(order: u32, band_filter: BandFilter, analog: Sampling, rp: f64) {
         },
     };
 
-    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter
+        .compute_filter(DesiredFilterOutput::Zpk)
+        .expect("valid filter output")
+        .zpk();
 
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {

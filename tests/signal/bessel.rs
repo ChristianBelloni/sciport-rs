@@ -65,7 +65,7 @@ fn test_besselap() {
         } else {
             continue;
         };
-        let rust = besselap::<f64>(i, BesselNorm::Phase);
+        let rust = besselap::<f64>(i, BesselNorm::Phase).expect("valid filter output");
         assert!(check_zpk_filter(rust, python));
     }
 }
@@ -108,7 +108,10 @@ fn test_bessel(order: u32, band_filter: BandFilter, analog: Sampling, norm: Bess
         },
     };
 
-    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter
+        .compute_filter(DesiredFilterOutput::Zpk)
+        .expect("valid filter output")
+        .zpk();
     let success = check_zpk_filter(rust.clone(), python.clone());
     if !success {
         println!("order {order} filter: {band_filter:#?}, analog {analog:#?}, norm {norm:#?}");

@@ -61,7 +61,7 @@ fn test_buttap() {
         } else {
             continue;
         };
-        let rust = buttap::<f64>(i);
+        let rust = buttap::<f64>(i).expect("valid filter output");
         let rust_ba = zpk2ba(rust.clone());
         let python_ba = with_scipy::<(Vec<Complex64>, Vec<Complex64>)>(&format!(
             "signal.zpk2tf(*signal.buttap({i}))"
@@ -106,7 +106,10 @@ pub fn test_butter(order: u32, band_filter: BandFilter, analog: Sampling) {
             analog,
         },
     };
-    let rust = filter.compute_filter(DesiredFilterOutput::Zpk).zpk();
+    let rust = filter
+        .compute_filter(DesiredFilterOutput::Zpk)
+        .expect("valid filter output")
+        .zpk();
 
     if rust.z.len() != python.0.len() {
         panic!()

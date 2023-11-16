@@ -1,7 +1,11 @@
 use super::{output_type::GenericZpk, tools::relative_degree};
 use ndarray::{array, concatenate, Array1, ArrayView, Axis};
 use num::{Complex, Float, Num, NumCast, Zero};
-use std::ops::{Div, Mul};
+use std::{
+    borrow::Cow,
+    ops::{Add, Div, Mul, Sub},
+};
+use thiserror::Error;
 
 pub type BandFilter = GenericBandFilter<f64>;
 
@@ -138,6 +142,304 @@ impl<T: Num + Copy> Div<T> for GenericBandFilter<T> {
                 high: high / rhs,
             },
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct GenericOrdBandFilter<T>(GenericOrdBandFilterType<T>);
+
+impl<T: std::ops::Deref> std::ops::Deref for GenericOrdBandFilter<T> {
+    type Target = GenericOrdBandFilterType<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> AsRef<GenericOrdBandFilterType<T>> for GenericOrdBandFilter<T> {
+    fn as_ref(&self) -> &GenericOrdBandFilterType<T> {
+        &self.0
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("{0}")]
+    Validation(Cow<'static, str>),
+}
+
+impl<T: Float> GenericOrdBandFilter<T> {
+    pub fn lowpass(wp: T, ws: T) -> Result<Self, Error> {
+        if wp > ws {
+            Err(Error::Validation(Cow::from(
+                "for lowpass filter wp must be smaller than ws",
+            )))?;
+        }
+        Ok(Self(GenericOrdBandFilterType::Lowpass { wp, ws }))
+    }
+
+    pub fn highpass(wp: T, ws: T) -> Result<Self, Error> {
+        if wp < ws {
+            Err(Error::Validation(Cow::from(
+                "for highpass filter ws must be smaller than wp",
+            )))?;
+        }
+        Ok(Self(GenericOrdBandFilterType::Lowpass { wp, ws }))
+    }
+
+    pub fn bandpass(wp_low: T, wp_high: T, ws_low: T, ws_high: T) -> Result<Self, Error> {
+        if wp_low < ws_low {
+            Err(Error::Validation(Cow::from(
+                "for bandpass filter ws_low must be smaller than wp_low",
+            )))?;
+        }
+        Ok(Self(GenericOrdBandFilterType::Bandpass {
+            wp_low,
+            wp_high,
+            ws_low,
+            ws_high,
+        }))
+    }
+
+    pub fn bandstop(wp_low: T, wp_high: T, ws_low: T, ws_high: T) -> Result<Self, Error> {
+        if ws_low < wp_low {
+            Err(Error::Validation(Cow::from(
+                "for bandstop filter wp_low must be smaller than ws_low",
+            )))?;
+        }
+        Ok(Self(GenericOrdBandFilterType::Bandpass {
+            wp_low,
+            wp_high,
+            ws_low,
+            ws_high,
+        }))
+    }
+
+    pub fn tan(self) -> Self {
+        use GenericOrdBandFilterType as S;
+        let inner = match self.0 {
+            S::Lowpass { wp, ws } => S::Lowpass {
+                wp: wp.tan(),
+                ws: ws.tan(),
+            },
+            S::Highpass { wp, ws } => S::Highpass {
+                wp: wp.tan(),
+                ws: ws.tan(),
+            },
+            S::Bandpass {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandpass {
+                wp_low: wp_low.tan(),
+                wp_high: wp_high.tan(),
+                ws_low: ws_low.tan(),
+                ws_high: ws_high.tan(),
+            },
+            S::Bandstop {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandstop {
+                wp_low: wp_low.tan(),
+                wp_high: wp_high.tan(),
+                ws_low: ws_low.tan(),
+                ws_high: ws_high.tan(),
+            },
+        };
+        Self(inner)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum GenericOrdBandFilterType<T> {
+    Lowpass {
+        wp: T,
+        ws: T,
+    },
+    Highpass {
+        wp: T,
+        ws: T,
+    },
+    Bandpass {
+        wp_low: T,
+        wp_high: T,
+        ws_low: T,
+        ws_high: T,
+    },
+    Bandstop {
+        wp_low: T,
+        wp_high: T,
+        ws_low: T,
+        ws_high: T,
+    },
+}
+
+impl<T: Float> Div<T> for GenericOrdBandFilter<T> {
+    type Output = Self;
+
+    fn div(self, rhs: T) -> Self::Output {
+        use GenericOrdBandFilterType as S;
+
+        let inner = match self.0 {
+            S::Lowpass { wp, ws } => S::Lowpass {
+                wp: wp / rhs,
+                ws: ws / rhs,
+            },
+            S::Highpass { wp, ws } => S::Highpass {
+                wp: wp / rhs,
+                ws: ws / rhs,
+            },
+            S::Bandpass {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandpass {
+                wp_low: wp_low / rhs,
+                wp_high: wp_high / rhs,
+                ws_low: ws_low / rhs,
+                ws_high: ws_high / rhs,
+            },
+            S::Bandstop {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandstop {
+                wp_low: wp_low / rhs,
+                wp_high: wp_high / rhs,
+                ws_low: ws_low / rhs,
+                ws_high: ws_high / rhs,
+            },
+        };
+        Self(inner)
+    }
+}
+impl<T: Float> Sub<T> for GenericOrdBandFilter<T> {
+    type Output = Self;
+
+    fn sub(self, rhs: T) -> Self::Output {
+        use GenericOrdBandFilterType as S;
+
+        let inner = match self.0 {
+            S::Lowpass { wp, ws } => S::Lowpass {
+                wp: wp - rhs,
+                ws: ws - rhs,
+            },
+            S::Highpass { wp, ws } => S::Highpass {
+                wp: wp - rhs,
+                ws: ws - rhs,
+            },
+            S::Bandpass {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandpass {
+                wp_low: wp_low - rhs,
+                wp_high: wp_high - rhs,
+                ws_low: ws_low - rhs,
+                ws_high: ws_high - rhs,
+            },
+            S::Bandstop {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandstop {
+                wp_low: wp_low - rhs,
+                wp_high: wp_high - rhs,
+                ws_low: ws_low - rhs,
+                ws_high: ws_high - rhs,
+            },
+        };
+        Self(inner)
+    }
+}
+impl<T: Float> Add<T> for GenericOrdBandFilter<T> {
+    type Output = Self;
+
+    fn add(self, rhs: T) -> Self::Output {
+        use GenericOrdBandFilterType as S;
+
+        let inner = match self.0 {
+            S::Lowpass { wp, ws } => S::Lowpass {
+                wp: wp + rhs,
+                ws: ws + rhs,
+            },
+            S::Highpass { wp, ws } => S::Highpass {
+                wp: wp + rhs,
+                ws: ws + rhs,
+            },
+            S::Bandpass {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandpass {
+                wp_low: wp_low + rhs,
+                wp_high: wp_high + rhs,
+                ws_low: ws_low + rhs,
+                ws_high: ws_high + rhs,
+            },
+            S::Bandstop {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandstop {
+                wp_low: wp_low + rhs,
+                wp_high: wp_high + rhs,
+                ws_low: ws_low + rhs,
+                ws_high: ws_high + rhs,
+            },
+        };
+        Self(inner)
+    }
+}
+
+impl<T: Float> Mul<T> for GenericOrdBandFilter<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        use GenericOrdBandFilterType as S;
+
+        let inner = match self.0 {
+            S::Lowpass { wp, ws } => S::Lowpass {
+                wp: wp * rhs,
+                ws: ws * rhs,
+            },
+            S::Highpass { wp, ws } => S::Highpass {
+                wp: wp * rhs,
+                ws: ws * rhs,
+            },
+            S::Bandpass {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandpass {
+                wp_low: wp_low * rhs,
+                wp_high: wp_high * rhs,
+                ws_low: ws_low * rhs,
+                ws_high: ws_high * rhs,
+            },
+            S::Bandstop {
+                wp_low,
+                wp_high,
+                ws_low,
+                ws_high,
+            } => S::Bandstop {
+                wp_low: wp_low * rhs,
+                wp_high: wp_high * rhs,
+                ws_low: ws_low * rhs,
+                ws_high: ws_high * rhs,
+            },
+        };
+        Self(inner)
     }
 }
 

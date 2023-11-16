@@ -17,7 +17,7 @@ fn with_py_fuzzy_lp2lp_zpk() {
     for _ in 0..1_000 {
         let mut rng = rand::thread_rng();
         let order = rng.gen_range(1..200);
-        let input = cheb1ap(order as _, rng.gen_range(1.0..7.00));
+        let input = cheb1ap(order as _, rng.gen_range(1.0..7.00)).expect("valid filter output");
         let wo = rng.gen_range(0.0..1.0);
         let input2 = input.clone();
         let rust = lp2lp_zpk(input.clone(), wo);
@@ -45,7 +45,7 @@ fn with_py_fuzzy_lp2hp_zpk() {
     for _ in 0..10_000 {
         let mut rng = rand::thread_rng();
         let order = rng.gen_range(1..200);
-        let input = buttap(order as _);
+        let input = buttap(order as _).expect("valid filter output");
         let wo = rng.gen_range(0.0..1.0);
         let input2 = input.clone();
         let rust = lp2hp_zpk(input.clone(), wo);
@@ -74,7 +74,7 @@ fn with_py_fuzzy_lp2bp_zpk() {
     for _ in 0..10_000 {
         let mut rng = rand::thread_rng();
         let order = rng.gen_range(2..100);
-        let input = buttap(order as _);
+        let input = buttap(order as _).expect("valid filter output");
         let wo = rng.gen_range(0.0..1.0);
         let bw = rng.gen_range(0.0..1.0);
         let input2 = input.clone();
@@ -112,7 +112,7 @@ fn with_py_fuzzy_lp2bs_zpk() {
     for _ in 0..10_000 {
         let order = rand::thread_rng().gen_range(1..5);
 
-        let input = buttap(order as _);
+        let input = buttap(order as _).expect("valid filter output");
 
         let wo = 0.5;
         let bw = 10.0;

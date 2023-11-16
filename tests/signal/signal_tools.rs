@@ -1,10 +1,8 @@
-use approx::assert_relative_eq;
 use ndarray::Array1;
 use numpy::Complex64;
 use sciport_rs::signal::{
-    band_filter::BandFilter, cheby1::Cheby1Filter, output_type::DesiredFilterOutput,
-    tools::generic_approx_complex_relative_slice_eq_dbg, Firwin1Filter, GenericFIRFilterSettings,
-    GenericIIRFilterSettings, IIRFilterDesign, Sampling, WindowType,
+    band_filter::BandFilter, tools::generic_approx_complex_relative_slice_eq_dbg, Firwin1Filter,
+    GenericFIRFilterSettings, Sampling, WindowType,
 };
 
 use crate::common::with_scipy;

@@ -11,15 +11,18 @@ use trait_set::trait_set;
 
 pub mod bessel;
 pub mod butter;
-// pub mod butterord;
+#[allow(unused)]
+pub mod butterord;
 pub mod cheby1;
 pub mod cheby2;
+pub mod error;
 // pub mod ellip;
+pub use error::Error;
 
-pub use bessel::*;
-pub use butter::*;
-pub use cheby1::*;
-pub use cheby2::*;
+pub use bessel::{besselap, BesselFilter, BesselNorm};
+pub use butter::{buttap, ButterFilter};
+pub use cheby1::{cheb1ap, Cheby1Filter};
+pub use cheby2::{cheb2ap, Cheby2Filter};
 
 trait_set! {
     pub trait IIRFilterBounds = FilterGetOutputBounds;
@@ -34,7 +37,7 @@ pub fn iir_filter<T>(
     mut band_filter: GenericBandFilter<T>,
     mut analog: GenericSampling<T>,
     desired_output: DesiredFilterOutput,
-) -> GenericFilterOutput<T>
+) -> Result<GenericFilterOutput<T>, super::error::Error>
 where
     T: IIRFilterBounds,
 {
@@ -57,7 +60,7 @@ where
         result = bilinear_zpk(result, *fs);
     }
 
-    GenericFilterOutput::get_output(result, desired_output)
+    Ok(GenericFilterOutput::get_output(result, desired_output))
 }
 
 pub struct GenericIIRFilterSettings<T> {
@@ -67,14 +70,17 @@ pub struct GenericIIRFilterSettings<T> {
 }
 
 pub trait ProtoIIRFilter<T: Float + FloatConst + ComplexFloat> {
-    fn proto_filter(&self) -> GenericZpk<T>;
+    fn proto_filter(&self) -> Result<GenericZpk<T>, crate::signal::error::Error>;
 
     fn filter_settings(&self) -> &GenericIIRFilterSettings<T>;
 }
 
 pub trait IIRFilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoIIRFilter<T> {
-    fn compute_filter(&self, desired_output: DesiredFilterOutput) -> GenericFilterOutput<T> {
-        let proto = self.proto_filter();
+    fn compute_filter(
+        &self,
+        desired_output: DesiredFilterOutput,
+    ) -> Result<GenericFilterOutput<T>, super::error::Error> {
+        let proto = self.proto_filter()?;
         let settings = self.filter_settings();
         iir_filter(
             proto,
@@ -87,3 +93,12 @@ pub trait IIRFilterDesign<T: Float + FloatConst + ComplexFloat>: ProtoIIRFilter<
 }
 
 impl<T: Float + FloatConst + ComplexFloat, K> IIRFilterDesign<T> for K where K: ProtoIIRFilter<T> {}
+
+pub trait OrdCompute<T> {
+    fn compute_order(&self) -> Result<OrdResult<T>, crate::signal::error::Error>;
+}
+
+pub struct OrdResult<T> {
+    pub order: u32,
+    pub filter: GenericBandFilter<T>,
+}

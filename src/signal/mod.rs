@@ -40,12 +40,14 @@ use ndarray::{Array, Array1, Dimension, Ix1};
 use num::Complex;
 
 pub mod band_filter;
+pub mod error;
 pub mod output_type;
 pub mod tools;
 
 pub use band_filter::{BandFilter, GenericBandFilter};
 pub use filter_design::GenericIIRFilterSettings;
 pub use filter_design::IIRFilterDesign;
+pub use filter_design::{OrdCompute, OrdResult};
 
 pub type Sampling = GenericSampling<f64>;
 

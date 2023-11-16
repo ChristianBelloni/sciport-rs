@@ -1,5 +1,6 @@
 use ndarray::{array, Array1};
 use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, One, Zero};
+use thiserror::Error;
 
 use crate::{
     optimize::Metric,
@@ -16,8 +17,10 @@ pub struct BesselFilter<T> {
 }
 
 impl<T: Float + FloatConst + ComplexFloat + Clone + Metric> ProtoIIRFilter<T> for BesselFilter<T> {
-    fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
-        besselap(self.settings.order, self.norm)
+    fn proto_filter(
+        &self,
+    ) -> Result<crate::signal::output_type::GenericZpk<T>, crate::signal::error::Error> {
+        Ok(besselap(self.settings.order, self.norm).map_err(super::Error::from)?)
     }
 
     fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
@@ -32,8 +35,10 @@ pub enum BesselNorm {
     Mag,
 }
 
-// TODO! _norm defaults to Phase, other normalizations are not implemented
-pub fn besselap<T: Float + FloatConst + Metric>(order: u32, norm: BesselNorm) -> GenericZpk<T> {
+pub fn besselap<T: Float + FloatConst + Metric>(
+    order: u32,
+    norm: BesselNorm,
+) -> Result<GenericZpk<T>, Error> {
     let z = array![];
     let mut p: Array1<Complex<T>>;
     let mut k = T::one();
@@ -43,7 +48,7 @@ pub fn besselap<T: Float + FloatConst + Metric>(order: u32, norm: BesselNorm) ->
         let a_last: T = (_falling_factorial::<T>(2 * order, order)
             / T::from(2.0).unwrap().powi(order as i32))
         .floor();
-        p = _bessel_zeros::<T>(order)
+        p = _bessel_zeros::<T>(order)?
             .into_iter()
             .map(|a| Complex::new(T::from(1.0).unwrap(), T::zero()) / a)
             .collect();
@@ -65,7 +70,7 @@ pub fn besselap<T: Float + FloatConst + Metric>(order: u32, norm: BesselNorm) ->
         }
     }
     let p = normalize_zeros(p);
-    GenericZpk { z, p, k }
+    Ok(GenericZpk { z, p, k })
 }
 
 fn _norm_factor<T: Float + FloatConst + Metric>(p: Array1<Complex<T>>, k: T) -> T {
@@ -95,9 +100,11 @@ fn _falling_factorial<T: Float>(x: u32, n: u32) -> T {
     T::from(y).unwrap()
 }
 
-fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(order: u32) -> Array1<Complex<T>> {
+fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(
+    order: u32,
+) -> Result<Array1<Complex<T>>, Error> {
     if order == 0 {
-        return array![];
+        return Ok(array![]);
     }
 
     let x0 = _campos_zeros(order);
@@ -123,7 +130,7 @@ fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(order: u32) -> A
         let r = first - second + third;
         Complex::new(T::from(r.re).unwrap(), T::from(r.im).unwrap())
     };
-    let mut x = _aberth(f, fp, &x0);
+    let mut x = _aberth(f, fp, &x0)?;
 
     for i in &mut x {
         let result = crate::optimize::root_scalar::newton::newton_method(f, fp, *i, None);
@@ -136,7 +143,7 @@ fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(order: u32) -> A
     let temp = x.iter().copied().zip(clone);
     let x: Array1<Complex<T>> = temp.map(|(a, b)| (a + b) / T::from(2.0).unwrap()).collect();
 
-    x
+    Ok(x)
 }
 
 fn _aberth<
@@ -147,7 +154,7 @@ fn _aberth<
     f: F,
     fp: FP,
     x0: &[Complex<T>],
-) -> Vec<Complex<T>> {
+) -> Result<Vec<Complex<T>>, Error> {
     let mut zs = x0.to_vec();
     let mut new_zs = zs.clone();
     let tol = T::from(1e-16).unwrap();
@@ -173,14 +180,14 @@ fn _aberth<
             }
             let err = (new_z - zs[i]).abs();
             if err < tol {
-                return new_zs;
+                return Ok(new_zs);
             }
 
             zs = new_zs.clone();
         }
     }
 
-    panic!();
+    Err(Error::Converge)
 }
 
 // verified with python
@@ -216,4 +223,10 @@ fn _campos_zeros<T: Float>(order: u32) -> Vec<Complex<T>> {
         .map(|(x, y)| *x + Complex::new(0.0, 1.0) * y)
         .map(|a| Complex::new(T::from(a.re).unwrap(), T::from(a.im).unwrap()))
         .collect::<Vec<_>>()
+}
+
+#[derive(Debug, Error, Clone)]
+pub enum Error {
+    #[error("failed to converge in aberth method")]
+    Converge,
 }

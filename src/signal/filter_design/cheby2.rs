@@ -2,7 +2,7 @@ use crate::signal::output_type::GenericZpk;
 use ndarray::{array, concatenate, Array1, Axis};
 use num::{complex::ComplexFloat, Complex, Float};
 
-use super::{GenericIIRFilterSettings, ProtoIIRFilter};
+use super::{error::Infallible, GenericIIRFilterSettings, ProtoIIRFilter};
 
 pub struct Cheby2Filter<T> {
     pub rs: T,
@@ -12,8 +12,8 @@ pub struct Cheby2Filter<T> {
 impl<T: Float + num::traits::FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T>
     for Cheby2Filter<T>
 {
-    fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
-        cheb2ap(self.settings.order, self.rs)
+    fn proto_filter(&self) -> Result<GenericZpk<T>, crate::signal::error::Error> {
+        Ok(cheb2ap(self.settings.order, self.rs).map_err(super::Error::from)?)
     }
 
     fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
@@ -21,14 +21,14 @@ impl<T: Float + num::traits::FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T
     }
 }
 
-pub fn cheb2ap<T: Float>(order: u32, rs: T) -> GenericZpk<T> {
+pub fn cheb2ap<T: Float>(order: u32, rs: T) -> Result<GenericZpk<T>, Infallible> {
     use std::f64::consts::PI;
     if order == 0 {
-        return GenericZpk {
+        return Ok(GenericZpk {
             z: array![],
             p: array![],
             k: T::one(),
-        };
+        });
     }
 
     let de = T::one() / (T::from(10).unwrap().powf(T::from(0.1).unwrap() * rs) - T::one()).sqrt();
@@ -88,5 +88,5 @@ pub fn cheb2ap<T: Float>(order: u32, rs: T) -> GenericZpk<T> {
         }
     }
     .re;
-    GenericZpk { z, p, k }
+    Ok(GenericZpk { z, p, k })
 }

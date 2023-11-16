@@ -3,15 +3,17 @@ use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float};
 
 use crate::signal::output_type::GenericZpk;
 
-use super::{GenericIIRFilterSettings, ProtoIIRFilter};
+use super::{error::Infallible, GenericIIRFilterSettings, ProtoIIRFilter};
 
 pub struct ButterFilter<T> {
     pub settings: GenericIIRFilterSettings<T>,
 }
 
 impl<T: Float + FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T> for ButterFilter<T> {
-    fn proto_filter(&self) -> crate::signal::output_type::GenericZpk<T> {
-        buttap(self.settings.order)
+    fn proto_filter(
+        &self,
+    ) -> Result<crate::signal::output_type::GenericZpk<T>, crate::signal::error::Error> {
+        Ok(buttap(self.settings.order).map_err(super::Error::from)?)
     }
 
     fn filter_settings(&self) -> &GenericIIRFilterSettings<T> {
@@ -19,7 +21,7 @@ impl<T: Float + FloatConst + ComplexFloat + Clone> ProtoIIRFilter<T> for ButterF
     }
 }
 
-pub fn buttap<T: Float>(order: u32) -> GenericZpk<T> {
+pub fn buttap<T: Float>(order: u32) -> Result<GenericZpk<T>, Infallible> {
     use std::f64::consts::PI;
     let order = order as i32;
     let z = array![];
@@ -43,5 +45,5 @@ pub fn buttap<T: Float>(order: u32) -> GenericZpk<T> {
         a
     });
 
-    GenericZpk { z, p, k }
+    Ok(GenericZpk { z, p, k })
 }
