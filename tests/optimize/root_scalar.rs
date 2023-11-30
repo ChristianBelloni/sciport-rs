@@ -18,6 +18,7 @@ fn root_scalar() {
         BracketMethod::Bisect,
         BracketMethod::RegularFalsi,
         BracketMethod::Ridder,
+        BracketMethod::Brent,
     ];
     let fun = |x: f64| 4.0 * x.powi(3) - 12.0 * x.powi(2) + 3.0 * x - 9.0;
     let dfun = |x: f64| 12.0 * x.powi(2) - 24.0 * x + 3.0;

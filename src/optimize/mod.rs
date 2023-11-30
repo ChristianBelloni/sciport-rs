@@ -172,39 +172,39 @@ where
     M: Metric,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // f.write_fmt(format_args!(
-        //     "{}",
-        //     [
-        //         format!("[Optimization Result]"),
-        //         format!("    flag     : {:?}", self.flag),
-        //         format!("    sol_x    : {:?}", self.sol_x),
-        //         format!("    sol_f    : {:?}", self.sol_f),
-        //         format!("    sol_j    : {:?}", self.sol_j),
-        //         format!("    sol_h    : {:?}", self.sol_h),
-        //         format!("    iter     : {:?}", self.iter),
-        //         format!("    target_f : {:?}", self.target_f),
-        //         format!("    nfev     : {:?}", self.nfev),
-        //         format!("    njev     : {:?}", self.njev),
-        //         format!("    nhev     : {:?}", self.nhev),
-        //         format!("    [criteria]"),
-        //         format!("        xatol         : {:?}", self.criteria.xatol),
-        //         format!("        xrtol         : {:?}", self.criteria.xrtol),
-        //         format!("        fatol         : {:?}", self.criteria.fatol),
-        //         format!("        frtol         : {:?}", self.criteria.frtol),
-        //         format!("        fltol         : {:?}", self.criteria.fltol),
-        //         format!("        maxiter       : {:?}", self.criteria.maxiter),
-        //         format!("        x_metric_type : {:?}", self.criteria.x_metric_type),
-        //         format!("        f_metric_type : {:?}", self.criteria.f_metric_type),
-        //         format!("    [Error]"),
-        //         format!("        err_xa : {:?}", self.err_xa),
-        //         format!("        err_xr : {:?}", self.err_xr),
-        //         format!("        err_fa : {:?}", self.err_fa),
-        //         format!("        err_fr : {:?}", self.err_fr),
-        //         format!("        err_fl : {:?}", self.err_fl),
-        //     ]
-        //     .join("\n")
-        // ))
-        Ok(())
+        f.write_fmt(format_args!(
+            "{}",
+            [
+                format!("[Optimization Result]"),
+                format!("    flag     : {:?}", self.flag),
+                format!("    sol_x    : {:?}", self.sol_x),
+                format!("    sol_f    : {:?}", self.sol_f),
+                format!("    sol_j    : {:?}", self.sol_j),
+                format!("    sol_h    : {:?}", self.sol_h),
+                format!("    iter     : {:?}", self.iter),
+                format!("    target_f : {:?}", self.target_f),
+                format!("    nfev     : {:?}", self.nfev),
+                format!("    njev     : {:?}", self.njev),
+                format!("    nhev     : {:?}", self.nhev),
+                format!("    [criteria]"),
+                format!("        xatol         : {:?}", self.criteria.xatol),
+                format!("        xrtol         : {:?}", self.criteria.xrtol),
+                format!("        fatol         : {:?}", self.criteria.fatol),
+                format!("        frtol         : {:?}", self.criteria.frtol),
+                format!("        fltol         : {:?}", self.criteria.fltol),
+                format!("        maxiter       : {:?}", self.criteria.maxiter),
+                format!("        x_metric_type : {:?}", self.criteria.x_metric_type),
+                format!("        f_metric_type : {:?}", self.criteria.f_metric_type),
+                format!("    [Error]"),
+                format!("        err_xa : {:?}", self.err_xa),
+                format!("        err_xr : {:?}", self.err_xr),
+                format!("        err_fa : {:?}", self.err_fa),
+                format!("        err_fr : {:?}", self.err_fr),
+                format!("        err_fl : {:?}", self.err_fl),
+            ]
+            .join("\n")
+        ))
+        //Ok(())
     }
 }
 

@@ -1,12 +1,15 @@
+use nalgebra::RealField;
 use num::traits::FloatConst;
 
+use crate::odr::polynomial::PolynomialCoef;
 use crate::optimize::*;
 
 use crate::optimize::root_scalar::*;
+use crate::optimize::util::Espilon;
 
 pub trait BracketSolver<F, R, M>: IterativeSolver<R, R, R, R, M>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
@@ -39,7 +42,7 @@ pub enum BracketMethodSolver<F, R> {
 
 impl<F, R, M> IterativeSolver<R, R, R, R, M> for BracketMethodSolver<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
@@ -80,7 +83,7 @@ impl BracketMethod {
         bracket_f: (R, R),
     ) -> BracketMethodSolver<F, R>
     where
-        R: IntoMetric<M> + Float,
+        R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
         M: Metric,
     {
         match self {
@@ -91,6 +94,7 @@ impl BracketMethod {
                 fun, bracket_x, bracket_f,
             )),
             Self::Ridder => BracketMethodSolver::Ridder(Ridder::new(fun, bracket_x, bracket_f)),
+            Self::Brent => BracketMethodSolver::Brent(Brent::new(fun, bracket_x, bracket_f)),
             _ => todo!(),
         }
     }
@@ -103,7 +107,7 @@ pub fn solve_from_bracket<F, R, M>(
     criteria: Option<OptimizeCriteria<R, R, M>>,
 ) -> OptimizeResult<R, R, R, R, M>
 where
-    R: IntoMetric<M> + Float + FloatConst,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: Fn(R) -> R,
 {
@@ -139,7 +143,7 @@ pub struct BisectSolver<F, R> {
 
 impl<F, R, M> BracketSolver<F, R, M> for BisectSolver<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
@@ -191,7 +195,7 @@ pub struct RegularFalsiSolver<F, R> {
 
 impl<F, R, M> BracketSolver<F, R, M> for RegularFalsiSolver<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
@@ -254,7 +258,7 @@ pub struct Ridder<F, R> {
 
 impl<F, R, M> BracketSolver<F, R, M> for Ridder<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
@@ -318,17 +322,18 @@ pub struct Brent<F, R> {
 
 impl<F, R, M> BracketSolver<F, R, M> for Brent<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
     fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
         let (mut a, mut b) = bracket_x;
-        let (fa, fb) = bracket_f;
+        let (mut fa, mut fb) = bracket_f;
 
-        if fa.abs() < fb.abs() {
+        if Float::abs(fa) < Float::abs(fb) {
             (a, b) = (b, a);
+            (fa, fb) = (fb, fa);
         }
 
         let (c, fc) = (a, fa);
@@ -348,13 +353,22 @@ where
 }
 impl<F, R, M> IterativeSolver<R, R, R, R, M> for Brent<F, R>
 where
-    R: IntoMetric<M> + Float,
+    R: IntoMetric<M> + Float + Espilon + PolynomialCoef + RealField,
     M: Metric,
     F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
-        let mut s = if self.a != self.b && self.a != self.c {
-            todo!("Inverse quadratic interpolation is not yet implemented");
+        //println!("----");
+        //println!("a: {:>8}, fa: {:>8}",self.a, self.fa);
+        //println!("b: {:>8}, fb: {:>8}",self.b, self.fb);
+        //println!("c: {:>8}, fb: {:>8}",self.c, self.fc);
+        //println!("d: {:?}",self.d);
+        //println!("u: {}", self.used_bisect);
+
+        let mut s = if self.fa != self.fb && self.fa != self.fc && self.fb != self.fc {
+            let y = [self.a, self.b, self.c];
+            let x = [self.fa, self.fb, self.fc];
+            least_square::poly_fit(&x, &y, 2).unwrap().eval(R::zero())
         } else {
             regular_falsi(self.a, self.b, self.fa, self.fb)
         };
@@ -364,10 +378,11 @@ where
             .is_sign_positive();
 
         let condition2 = self.used_bisect
-            && (s - self.b).abs() >= (self.b - self.c).abs() / R::from(2.0).unwrap();
+            && Float::abs(s - self.b) >= Float::abs(self.b - self.c) / R::from(2.0).unwrap();
 
         let condition3 = if let Some(d) = self.d {
-            !self.used_bisect && (s - self.b).abs() >= (self.c - d).abs() / R::from(2.0).unwrap()
+            !self.used_bisect
+                && Float::abs(s - self.b) >= Float::abs(self.c - d) / R::from(2.0).unwrap()
         } else {
             false
         };
@@ -375,6 +390,8 @@ where
         if condition1 || condition2 || condition3 {
             s = (self.a + self.b) / R::from(2.0).unwrap();
         }
+
+        //println!("s : {}", s);
 
         let fs = (self.fun)(s);
 
@@ -390,7 +407,7 @@ where
             self.fa = fs;
         }
 
-        if self.fa.abs() < self.fb.abs() {
+        if Float::abs(self.fa) < Float::abs(self.fb) {
             (self.a, self.b, self.fa, self.fb) = (self.b, self.a, self.fb, self.fa);
         }
 
