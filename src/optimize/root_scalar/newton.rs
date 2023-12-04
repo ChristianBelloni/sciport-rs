@@ -1,6 +1,56 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
 
+pub fn approx_derivative<F, C, M>(fun: F) -> impl Fn(C) -> C
+where
+    F: Fn(C) -> C,
+    C: IntoMetric<M> + ComplexFloat + Espilon,
+    M: Metric,
+{
+    let delta: C = C::epsilon().powf(C::from(1.0/3.0).unwrap().re());
+    move |x: C| (fun(x + delta) - fun(x)) / delta
+}
+
+pub fn newton_method_approx<F, C, M>(
+    fun: F,
+    x0: C,
+    criteria: Option<OptimizeCriteria<C, C, M>>,
+) -> OptimizeResult<C, C, C, C, M>
+where
+    C: IntoMetric<M> + ComplexFloat + Espilon,
+    M: Metric,
+    F: Fn(C) -> C,
+{
+    let evaluator = RootScalarEvaluator::new(criteria);
+    let evaluator = Rc::new(RefCell::new(evaluator));
+
+    
+    let fun = {
+        let evaluator = evaluator.clone();
+        move |x| {
+            evaluator.borrow_mut().res.fev();
+            fun(x)
+        }
+    };
+
+    let fun = Rc::new(fun);
+
+    let dfun = {
+        let evaluator = evaluator.clone();
+        let f = fun.clone();
+        let df = approx_derivative(move|x|f(x));
+        move |x| {
+            df(x)
+        }
+    };
+
+    let fun = move |x| fun(x);
+
+    let solver = NewtonSolver::new(fun, dfun, x0);
+
+    iterative_optimize(solver, evaluator)
+}
+
 pub fn newton_method<F, FD, C, M>(
     fun: F,
     dfun: FD,
@@ -8,7 +58,7 @@ pub fn newton_method<F, FD, C, M>(
     criteria: Option<OptimizeCriteria<C, C, M>>,
 ) -> OptimizeResult<C, C, C, C, M>
 where
-    C: IntoMetric<M> + ComplexFloat,
+    C: IntoMetric<M> + ComplexFloat + Espilon,
     M: Metric,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
@@ -39,7 +89,7 @@ where
 
 pub struct NewtonSolver<F, FD, C>
 where
-    C: ComplexFloat,
+    C: ComplexFloat + Espilon,
 {
     fun: F,
     dfun: FD,
@@ -50,7 +100,7 @@ where
 
 impl<F, FD, C> NewtonSolver<F, FD, C>
 where
-    C: ComplexFloat,
+    C: ComplexFloat + Espilon,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
 {
@@ -70,13 +120,13 @@ where
 
 impl<F, FD, C, M> IterativeSolver<C, C, C, C, M> for NewtonSolver<F, FD, C>
 where
-    C: IntoMetric<M> + ComplexFloat,
+    C: IntoMetric<M> + ComplexFloat + Espilon,
     M: Metric,
     F: Fn(C) -> C,
     FD: Fn(C) -> C,
 {
     fn new_solution(&mut self) -> (C, C, Option<C>, Option<C>) {
-        self.x0 = self.x0 - (self.f0) / (self.j0 + C::from(<f64 as Float>::epsilon()).unwrap());
+        self.x0 = self.x0 - (self.f0) / (self.j0 + C::epsilon());
         self.f0 = (self.fun)(self.x0);
         self.j0 = (self.dfun)(self.x0);
 
