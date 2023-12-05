@@ -7,7 +7,7 @@ where
     C: IntoMetric<M> + ComplexFloat + Espilon,
     M: Metric,
 {
-    let delta: C = C::epsilon().powf(C::from(1.0/3.0).unwrap().re());
+    let delta: C = C::epsilon().powf(C::from(1.0 / 3.0).unwrap().re());
     move |x: C| (fun(x + delta) - fun(x)) / delta
 }
 
@@ -24,7 +24,6 @@ where
     let evaluator = RootScalarEvaluator::new(criteria);
     let evaluator = Rc::new(RefCell::new(evaluator));
 
-    
     let fun = {
         let evaluator = evaluator.clone();
         move |x| {
@@ -38,10 +37,8 @@ where
     let dfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        let df = approx_derivative(move|x|f(x));
-        move |x| {
-            df(x)
-        }
+        let df = approx_derivative(move |x| f(x));
+        move |x| df(x)
     };
 
     let fun = move |x| fun(x);

@@ -13,11 +13,9 @@ where
     M: Metric,
     F: Fn(C) -> C,
 {
-    
     let evaluator = RootScalarEvaluator::new(criteria);
     let evaluator = Rc::new(RefCell::new(evaluator));
 
-    
     let fun = {
         let evaluator = evaluator.clone();
         move |x| {
@@ -25,26 +23,22 @@ where
             fun(x)
         }
     };
-    
+
     let fun = Rc::new(fun);
 
     let dfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        let df = newton::approx_derivative(move|x|f(x));
-        move |x| {
-            df(x)
-        }
+        let df = newton::approx_derivative(move |x| f(x));
+        move |x| df(x)
     };
 
     let ddfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        let df = newton::approx_derivative(move|x|f(x));
-        let ddf = newton::approx_derivative(move|x|df(x));
-        move |x| {
-            ddf(x)
-        }
+        let df = newton::approx_derivative(move |x| f(x));
+        let ddf = newton::approx_derivative(move |x| df(x));
+        move |x| ddf(x)
     };
 
     let fun = move |x| fun(x);
