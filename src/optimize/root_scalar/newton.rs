@@ -1,16 +1,6 @@
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
 
-pub fn approx_derivative<F, C, M>(fun: F) -> impl Fn(C) -> C
-where
-    F: Fn(C) -> C,
-    C: IntoMetric<M> + ComplexFloat + Espilon,
-    M: Metric,
-{
-    let delta: C = C::epsilon().powf(C::from(1.0 / 3.0).unwrap().re());
-    move |x: C| (fun(x + delta) - fun(x)) / delta
-}
-
 pub fn newton_method_approx<F, C, M>(
     fun: F,
     x0: C,

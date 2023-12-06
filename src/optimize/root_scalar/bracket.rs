@@ -457,14 +457,14 @@ where
         let (d, fd) = self.d;
 
         match (self.b, self.c) {
-            // For the first guess we only have the bracket, 
+            // For the first guess we only have the bracket,
             (None, None) => {
                 // we just use regular falsi to find a new guess
                 let mut g = regular_falsi(a, d, fa, fd);
 
                 // evaluate fun at the new guess
                 let fg = (self.fun)(g);
-                
+
                 // check the if the sign of fg is the same as fa or fd
                 if (fg * fa).is_positive() {
                     // if it is the same as fa, we have b and fb, the inner guess on the a's side
@@ -489,7 +489,7 @@ where
                     // we make a new guess using bisection
                     let m = (b + d) / R::from_f64(2.0).unwrap();
                     let fm = (self.fun)(m);
-                    
+
                     // determint if fm is on d's side
                     if (fm * fd).is_positive() {
                         // if it is, we get inner guess on d's side
@@ -503,11 +503,10 @@ where
                     return (m, fm, None, None);
                 }
 
-                
                 // if the new guess does fall in between a's inner guess and d
                 // we evaluat fun at the new guess
                 let mut fg = (self.fun)(g);
-                
+
                 // if fg is on d's side
                 if (fg * fd).is_positive() {
                     // we get out second guess on d's side
@@ -517,7 +516,7 @@ where
                 // if it isn't on d's side, we use bisection to make one more guess
                 let m = (b + d) / R::from_f64(2.0).unwrap();
                 let fm = (self.fun)(m);
-                
+
                 // if fm is on d's side
                 if (fm * fd).is_positive() {
                     // we get inner guess on d's side
@@ -589,7 +588,7 @@ where
                 let x = [fa, fb, fc, fd];
                 let g = least_square::poly_fit(&x, &y, 3).unwrap().eval(R::zero());
 
-                // if the new guess does not fall between inner guess of either side 
+                // if the new guess does not fall between inner guess of either side
                 let g = if ((g - b) * (g - c)).is_positive() {
                     // change the new guess to using bisection
                     (b + c) / R::from_f64(2.0).unwrap()

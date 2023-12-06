@@ -29,15 +29,14 @@ where
     let dfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        let df = newton::approx_derivative(move |x| f(x));
+        let df = approx_derivative(move |x| f(x));
         move |x| df(x)
     };
 
     let ddfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        let df = newton::approx_derivative(move |x| f(x));
-        let ddf = newton::approx_derivative(move |x| df(x));
+        let ddf = approx_second_derivative(move |x| f(x));
         move |x| ddf(x)
     };
 
