@@ -98,7 +98,9 @@ impl BracketMethod {
             )),
             Self::Ridder => BracketMethodSolver::Ridder(Ridder::new(fun, bracket_x, bracket_f)),
             Self::Brent => BracketMethodSolver::Brent(Brent::new(fun, bracket_x, bracket_f)),
-            Self::InverseCubic => BracketMethodSolver::InverseCubic(InverseCubic::new(fun, bracket_x, bracket_f)),
+            Self::InverseCubic => {
+                BracketMethodSolver::InverseCubic(InverseCubic::new(fun, bracket_x, bracket_f))
+            }
             _ => todo!(),
         }
     }
@@ -451,111 +453,161 @@ where
     F: FnMut(R) -> R,
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
-        let (a,fa) = self.a;
-        let (d,fd) = self.d;
+        let (a, fa) = self.a;
+        let (d, fd) = self.d;
 
-        match (self.b, self.c){
-            (None,None)=>{
+        match (self.b, self.c) {
+            // For the first guess we only have the bracket, 
+            (None, None) => {
+                // we just use regular falsi to find a new guess
                 let mut g = regular_falsi(a, d, fa, fd);
 
+                // evaluate fun at the new guess
                 let fg = (self.fun)(g);
-
-                if (fg * fa).is_positive(){
-                    self.b = Some((g,fg));
-                }else{
-                    self.c = Some((g,fg));
+                
+                // check the if the sign of fg is the same as fa or fd
+                if (fg * fa).is_positive() {
+                    // if it is the same as fa, we have b and fb, the inner guess on the a's side
+                    self.b = Some((g, fg));
+                } else {
+                    // if it is the same as fd, we have c and fc, the inner guess on the d's side
+                    self.c = Some((g, fg));
                 }
 
-                (g,fg,None,None)
-            },
+                (g, fg, None, None)
+            }
 
-            (Some((b,fb)),None)=>{
+            // when there are no inner guess on d's side
+            (Some((b, fb)), None) => {
+                // we have three point, and can perform inverse quadratic interpolation
                 let y = [a, b, d];
                 let x = [fa, fb, fd];
-                let mut g = least_square::poly_fit(&x, &y, 2).unwrap().eval(R::zero());
+                let g = least_square::poly_fit(&x, &y, 2).unwrap().eval(R::zero());
 
-                let mut fg = (self.fun)(g);
-
-                if (fg*fd).is_positive(){
-                    self.c = Some((g,fg));
-                    return (g,fg,None,None);
+                // if the new guess does not fall in between a's inner guess and d
+                if ((g - b) * (g - d)).is_positive() {
+                    // we make a new guess using bisection
+                    let m = (b + d) / R::from_f64(2.0).unwrap();
+                    let fm = (self.fun)(m);
+                    
+                    // determint if fm is on d's side
+                    if (fm * fd).is_positive() {
+                        // if it is, we get inner guess on d's side
+                        self.c = Some((m, fm));
+                    } else {
+                        // if it isn't, we enclose the guess on a's side
+                        self.a = (b, fb);
+                        self.b = Some((m, fm));
+                    }
+                    // and return the new guess
+                    return (m, fm, None, None);
                 }
 
-                let m = (b+d)/R::from_f64(2.0).unwrap();
-                let fm = (self.fun)(m);
-
-                if (fm*fd).is_positive(){
-                    self.c = Some((m,fm));
-                    return (m,fm,None,None);
-                }
                 
-                if ((g-b)*(g-m)).is_negative(){
-                    self.a = (g,fg);
-                    self.b = Some((m,fm));
-                    return (m,fm,None,None);
+                // if the new guess does fall in between a's inner guess and d
+                // we evaluat fun at the new guess
+                let mut fg = (self.fun)(g);
+                
+                // if fg is on d's side
+                if (fg * fd).is_positive() {
+                    // we get out second guess on d's side
+                    self.c = Some((g, fg));
+                    return (g, fg, None, None);
+                }
+                // if it isn't on d's side, we use bisection to make one more guess
+                let m = (b + d) / R::from_f64(2.0).unwrap();
+                let fm = (self.fun)(m);
+                
+                // if fm is on d's side
+                if (fm * fd).is_positive() {
+                    // we get inner guess on d's side
+                    self.c = Some((m, fm));
+                    return (m, fm, None, None);
                 }
 
-                self.a = (m,fm);
-                self.b =  Some((g,fg));
+                // if both guess are not at d's side
+                // we check which one is better at enclosing
+                if ((g - b) * (g - m)).is_negative() {
+                    self.a = (g, fg);
+                    self.b = Some((m, fm));
+                    return (m, fm, None, None);
+                }
+                self.a = (m, fm);
+                self.b = Some((g, fg));
+                (g, fg, None, None)
+            }
 
-                (g,fg,None,None)
-            },
-
-            (None,Some((c,fc)))=>{
+            (None, Some((c, fc))) => {
                 let y = [a, c, d];
                 let x = [fa, fc, fd];
-                let mut g = least_square::poly_fit(&x, &y, 2).unwrap().eval(R::zero());
+                let g = least_square::poly_fit(&x, &y, 2).unwrap().eval(R::zero());
+
+                if ((g - c) * (g - a)).is_positive() {
+                    let m = (a + c) / R::from_f64(2.0).unwrap();
+                    let fm = (self.fun)(m);
+
+                    if (fm * fd).is_positive() {
+                        self.b = Some((m, fm));
+                    } else {
+                        self.d = (c, fc);
+                        self.b = Some((m, fm));
+                    }
+
+                    return (m, fm, None, None);
+                }
 
                 let mut fg = (self.fun)(g);
 
-                if (fg*fa).is_positive(){
-                    self.b = Some((g,fg));
-                    return (g,fg,None,None);
+                if (fg * fa).is_positive() {
+                    self.b = Some((g, fg));
+                    return (g, fg, None, None);
                 }
 
-                let m = (a+c)/R::from_f64(2.0).unwrap();
+                let m = (a + c) / R::from_f64(2.0).unwrap();
                 let fm = (self.fun)(m);
 
-                if (fm*fd).is_positive(){
-                    self.c = Some((g,fm));
-                    return (g,fm,None,None);
-                }
-                
-                if ((g-c)*(g-m)).is_negative(){
-                    self.d = (g,fg);
-                    self.c = Some((m,fm));
-                    return (m,fm,None,None);
+                if (fm * fd).is_positive() {
+                    self.c = Some((g, fm));
+                    return (g, fm, None, None);
                 }
 
-                self.d = (m,fm);
-                self.c =  Some((g,fg));
+                if ((g - c) * (g - m)).is_negative() {
+                    self.d = (g, fg);
+                    self.c = Some((m, fm));
+                    return (m, fm, None, None);
+                }
 
-                (g,fg,None,None)
+                self.d = (m, fm);
+                self.c = Some((g, fg));
 
-            },
-            (Some((b,fb)),Some((c,fc)))=>{                
+                (g, fg, None, None)
+            }
+            // when we have both inner and outter guess on both side
+            (Some((b, fb)), Some((c, fc))) => {
+                // we can use inverse cubic interpolation to generate a new guess
                 let y = [a, b, c, d];
-                let x = [fa,fb, fc, fd];
+                let x = [fa, fb, fc, fd];
                 let g = least_square::poly_fit(&x, &y, 3).unwrap().eval(R::zero());
-                
-                let g = if ((g-b)*(g-c)).is_positive(){
-                    (b+c)/R::from_f64(2.0).unwrap()
-                }else{
+
+                // if the new guess does not fall between inner guess of either side 
+                let g = if ((g - b) * (g - c)).is_positive() {
+                    // change the new guess to using bisection
+                    (b + c) / R::from_f64(2.0).unwrap()
+                } else {
                     g
                 };
 
                 let fg = (self.fun)(g);
 
-                
-                if (fg*fa).is_positive(){
-                    self.a = (b,fb);
-                    self.b = Some((g,fg));
-                }else{
-                    self.d = (c,fc);
-                    self.c = Some((g,fg));
+                if (fg * fa).is_positive() {
+                    self.a = (b, fb);
+                    self.b = Some((g, fg));
+                } else {
+                    self.d = (c, fc);
+                    self.c = Some((g, fg));
                 }
 
-                (g,fg,None,None)
+                (g, fg, None, None)
             }
         }
     }
