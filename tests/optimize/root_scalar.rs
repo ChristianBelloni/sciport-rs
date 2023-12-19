@@ -1,5 +1,7 @@
 use num::complex::Complex64;
 
+use sciport_rs::optimize::root_scalar::halley::halley_method_approx;
+use sciport_rs::optimize::root_scalar::newton::newton_method_approx;
 use sciport_rs::optimize::root_scalar::{
     bracket::BracketMethod, fixed_point_method, halley_method, newton_method, secant_method,
     solve_from_bracket,
@@ -18,6 +20,8 @@ fn root_scalar() {
         BracketMethod::Bisect,
         BracketMethod::RegularFalsi,
         BracketMethod::Ridder,
+        BracketMethod::Brent,
+        BracketMethod::InverseCubic,
     ];
     let fun = |x: f64| 4.0 * x.powi(3) - 12.0 * x.powi(2) + 3.0 * x - 9.0;
     let dfun = |x: f64| 12.0 * x.powi(2) - 24.0 * x + 3.0;
@@ -45,8 +49,16 @@ fn root_scalar() {
     let res = newton_method(fun, dfun, x0, criteria.clone());
     println!("{}", res);
 
+    print_divider("Newton Approx".to_string());
+    let res = newton_method_approx(fun, x0, criteria.clone());
+    println!("{}", res);
+
     print_divider("Halley".to_string());
     let res = halley_method(fun, dfun, ddfun, x0, criteria.clone());
+    println!("{}", res);
+
+    print_divider("Halley Approx".to_string());
+    let res = halley_method_approx(fun, x0, criteria.clone());
     println!("{}", res);
 
     let fun = |z: Complex64| 2.0 * z.powi(3) - 10.0 * z.powi(2) + 3.0 * z - 15.0;
@@ -67,8 +79,16 @@ fn root_scalar() {
     let res = newton_method(fun, dfun, x0, criteria.clone());
     println!("{}", res);
 
+    print_divider("Newton Complex Approx".to_string());
+    let res = newton_method_approx(fun, x0, criteria.clone());
+    println!("{}", res);
+
     print_divider("Halley Complex".to_string());
     let res = halley_method(fun, dfun, ddfun, x0, criteria.clone());
+    println!("{}", res);
+
+    print_divider("Halley Complex Approx".to_string());
+    let res = halley_method_approx(fun, x0, criteria.clone());
     println!("{}", res);
 
     let fun = |x: f64| x.sin();

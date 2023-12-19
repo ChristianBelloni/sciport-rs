@@ -1,5 +1,51 @@
+use std::rc::Rc;
+
 use crate::optimize::root_scalar::*;
 use crate::optimize::util::*;
+
+pub fn halley_method_approx<F, C, M>(
+    fun: F,
+    x0: C,
+    criteria: Option<OptimizeCriteria<C, C, M>>,
+) -> OptimizeResult<C, C, C, C, M>
+where
+    C: IntoMetric<M> + ComplexFloat + Espilon,
+    M: Metric,
+    F: Fn(C) -> C,
+{
+    let evaluator = RootScalarEvaluator::new(criteria);
+    let evaluator = Rc::new(RefCell::new(evaluator));
+
+    let fun = {
+        let evaluator = evaluator.clone();
+        move |x| {
+            evaluator.borrow_mut().res.fev();
+            fun(x)
+        }
+    };
+
+    let fun = Rc::new(fun);
+
+    let dfun = {
+        let evaluator = evaluator.clone();
+        let f = fun.clone();
+        let df = approx_derivative(move |x| f(x));
+        move |x| df(x)
+    };
+
+    let ddfun = {
+        let evaluator = evaluator.clone();
+        let f = fun.clone();
+        let ddf = approx_second_derivative(move |x| f(x));
+        move |x| ddf(x)
+    };
+
+    let fun = move |x| fun(x);
+
+    let solver = NewtonSolver::new(fun, dfun, ddfun, x0);
+
+    iterative_optimize(solver, evaluator)
+}
 
 pub fn halley_method<F, FD1, FD2, C, M>(
     fun: F,

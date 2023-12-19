@@ -14,8 +14,8 @@ pub mod secant;
 
 pub use bracket::solve_from_bracket;
 pub use fixed_point::fixed_point_method;
-pub use halley::halley_method;
-pub use newton::newton_method;
+pub use halley::{halley_method, halley_method_approx};
+pub use newton::{newton_method, newton_method_approx};
 pub use polynomial::polynomial_roots;
 pub use secant::secant_method;
 

@@ -10,7 +10,7 @@ use num::{Complex, Float, NumCast, One, Zero};
 /// `Metric` is trait for float, which all compare the optimizing solution to the allowed tolerance
 ///
 /// It is implemented for `f32` and `f64`
-pub trait Metric: Float + Sized + Clone {}
+pub trait Metric: Float + Sized + Clone + Debug {}
 impl Metric for f32 {}
 impl Metric for f64 {}
 
@@ -73,7 +73,7 @@ where
 /// since its nesserary to compare new and old solution in iterative optimization.
 pub trait IntoMetric<M>
 where
-    Self: Sub<Output = Self> + Add<Output = Self> + Sized + Clone,
+    Self: Sub<Output = Self> + Add<Output = Self> + Sized + Clone + Debug,
     M: Metric,
 {
     /// return the total number of element in the type for calculating mean.

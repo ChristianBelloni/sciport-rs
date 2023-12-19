@@ -3,7 +3,7 @@ use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, NumCast, On
 use thiserror::Error;
 
 use crate::{
-    optimize::Metric,
+    optimize::{util::Espilon, Metric},
     signal::{output_type::GenericZpk, tools::polyval},
     special::kve,
     tools::complex::normalize_zeros,
@@ -16,7 +16,11 @@ pub struct BesselFilter<T> {
     pub settings: GenericIIRFilterSettings<T>,
 }
 
-impl<T: Float + FloatConst + ComplexFloat + Clone + Metric> ProtoIIRFilter<T> for BesselFilter<T> {
+impl<T: Float + FloatConst + ComplexFloat + Clone + Metric + Espilon> ProtoIIRFilter<T>
+    for BesselFilter<T>
+where
+    Complex<T>: Espilon,
+{
     fn proto_filter(
         &self,
     ) -> Result<crate::signal::output_type::GenericZpk<T>, crate::signal::error::Error> {
@@ -35,10 +39,13 @@ pub enum BesselNorm {
     Mag,
 }
 
-pub fn besselap<T: Float + FloatConst + Metric>(
+pub fn besselap<T: Float + FloatConst + Metric + Espilon>(
     order: u32,
     norm: BesselNorm,
-) -> Result<GenericZpk<T>, Error> {
+) -> Result<GenericZpk<T>, Error>
+where
+    Complex<T>: Espilon,
+{
     let z = array![];
     let mut p: Array1<Complex<T>>;
     let mut k = T::one();
@@ -100,9 +107,12 @@ fn _falling_factorial<T: Float>(x: u32, n: u32) -> T {
     T::from(y).unwrap()
 }
 
-fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric>(
+fn _bessel_zeros<T: Float + FloatConst + ComplexFloat + Metric + Espilon>(
     order: u32,
-) -> Result<Array1<Complex<T>>, Error> {
+) -> Result<Array1<Complex<T>>, Error>
+where
+    Complex<T>: Espilon,
+{
     if order == 0 {
         return Ok(array![]);
     }
