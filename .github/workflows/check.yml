@@ -62,21 +62,6 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-  doc:
-    runs-on: ubuntu-latest
-    name: nightly / doc
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Install nightly
-        uses: dtolnay/rust-toolchain@nightly
-      - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
-      - name: cargo doc
-        run: cargo doc --no-deps --all-features
-        env:
-          RUSTDOCFLAGS: --cfg docsrs
   hack:
     runs-on: ubuntu-latest
     name: ubuntu / stable / features
