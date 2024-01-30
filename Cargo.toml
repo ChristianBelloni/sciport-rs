@@ -19,9 +19,7 @@ itertools = "0.12.0"
 nalgebra = "0.32.3"
 approx = { version = "0.5", features = ["num-complex"] }
 thiserror = { version = "1.0" }
-
-[target.'cfg(macos)'.dependencies]
-blas-src = { version = "0.9.0", default-features = false, features = ["accelerate"], optional = true }
+#blas-src = { version = "0.9.0", default-features = false, features = ["accelerate"], optional = true }
 
 [dev-dependencies]
 pyo3 = { version = "0.20.0", features = ["full", "auto-initialize"] }
@@ -33,6 +31,6 @@ lazy_static = "1.4.0"
 # 
 
 
-[features]
-"blas" = ["ndarray/blas", "dep:blas-src"]
+#[features]
+#"blas" = ["ndarray/blas", "dep:blas-src"]
 
