@@ -115,13 +115,9 @@ pub fn polyval<T: Into<Complex<f64>> + Copy, const S: usize>(v: T, coeff: [T; S]
     polyval(v.into(), tmp)
 }
 
-trait_set! {
-    pub trait Zpk2Ba = Float + FloatConst + ComplexFloat;
-}
-
 pub fn zpk2ba<T>(zpk: GenericZpk<T>) -> GenericBa<T>
 where
-    T: Zpk2Ba,
+    T: Float + FloatConst + ComplexFloat,
 {
     let GenericZpk { z, p, k } = zpk;
 

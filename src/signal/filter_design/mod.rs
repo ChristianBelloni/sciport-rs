@@ -1,13 +1,10 @@
-use num::{complex::ComplexFloat, traits::FloatConst, Float};
-
-use crate::signal::{band_filter::lp2bf_zpk, tools::bilinear_zpk};
-
 use super::{
     band_filter::GenericBandFilter,
-    output_type::{DesiredFilterOutput, FilterGetOutputBounds, GenericFilterOutput, GenericZpk},
+    output_type::{DesiredFilterOutput, GenericFilterOutput, GenericZpk},
     GenericSampling,
 };
-use trait_set::trait_set;
+use crate::signal::{band_filter::lp2bf_zpk, tools::bilinear_zpk};
+use num::{complex::ComplexFloat, traits::FloatConst, Float};
 
 pub mod bessel;
 pub mod butter;
@@ -24,10 +21,6 @@ pub use butter::{buttap, ButterFilter};
 pub use cheby1::{cheb1ap, Cheby1Filter};
 pub use cheby2::{cheb2ap, Cheby2Filter};
 
-trait_set! {
-    pub trait IIRFilterBounds = FilterGetOutputBounds;
-}
-
 /// Generic iir_filter
 ///
 /// Takes a filter prototype and returns the final filter in the desired output
@@ -39,7 +32,7 @@ pub fn iir_filter<T>(
     desired_output: DesiredFilterOutput,
 ) -> Result<GenericFilterOutput<T>, super::error::Error>
 where
-    T: IIRFilterBounds,
+    T: Float + FloatConst + ComplexFloat,
 {
     use std::f64::consts::PI;
 

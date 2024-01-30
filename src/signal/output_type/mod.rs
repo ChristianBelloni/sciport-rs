@@ -1,11 +1,6 @@
+use super::{tools::zpk2ba, Filter, LFilterOutput};
 use ndarray::{Array1, Ix1};
-use num::{traits::FloatConst, Complex, Float};
-use trait_set::trait_set;
-
-use super::{
-    tools::{zpk2ba, Zpk2Ba},
-    Filter, LFilterOutput,
-};
+use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float};
 mod ba;
 mod sos;
 mod zpk;
@@ -81,17 +76,13 @@ impl<T> GenericFilterOutput<T> {
     }
 }
 
-trait_set! {
-    pub trait FilterGetOutputBounds = Zpk2Ba;
-}
-
 impl FilterOutput {
     pub fn get_output<T>(
         input: GenericZpk<T>,
         desired: DesiredFilterOutput,
     ) -> GenericFilterOutput<T>
     where
-        T: FilterGetOutputBounds,
+        T: Float + FloatConst + ComplexFloat,
     {
         match desired {
             DesiredFilterOutput::Zpk => GenericFilterOutput::Zpk(input),

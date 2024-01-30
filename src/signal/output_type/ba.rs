@@ -1,16 +1,13 @@
 use crate::{
-    signal::{
-        signal_tools::linear_filter,
-        tools::{zpk2ba, Zpk2Ba},
-    },
+    signal::{signal_tools::linear_filter, tools::zpk2ba},
     tools::convolve1d,
 };
 use ndarray::{Array1, Ix1};
-use num::{Complex, Float, Zero};
+use num::{complex::ComplexFloat, traits::FloatConst, Complex, Float, Zero};
 
 use super::{Filter, GenericBa, GenericZpk, LFilterOutput};
 
-impl<T: Zpk2Ba> From<GenericZpk<T>> for GenericBa<T> {
+impl<T: Float + FloatConst + ComplexFloat> From<GenericZpk<T>> for GenericBa<T> {
     fn from(value: GenericZpk<T>) -> Self {
         zpk2ba(value)
     }
