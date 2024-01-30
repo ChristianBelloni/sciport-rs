@@ -10,6 +10,18 @@ concurrency:
   cancel-in-progress: true
 name: check
 jobs:
+  doc:
+    name: Documentation
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/install@cargo-docs-rs
+      - name: install fortran compiler
+        run: sudo apt install -y gfortran-13
+      - run: cargo docs-rs
   fmt:
     runs-on: ubuntu-latest
     name: stable / fmt
