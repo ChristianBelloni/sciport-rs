@@ -1,14 +1,8 @@
-![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
-[![crates-io](https://img.shields.io/crates/v/sciport-rs.svg)](https://crates.io/crates/sciport-rs)
-[![api-docs](https://docs.rs/sciport-rs/badge.svg)](https://docs.rs/sciport-rs)
+# sciport-rs
 
 ## Sciport-rs
 
 Sciport is a collection of mathematical algorithms ported from the popular python package Scipy
-
-## Dependencies
-
-To build this library is necessary to install gfortran-13
 
 ## Api design
 
@@ -28,14 +22,13 @@ however, a single frequency makes sense only for a subset of btypes and so does 
 in our implementation we rewrite this function like:
 
 ```rust
-fn filter<T>(order: u32, band_filter: BandFilter, analog: Analog) { .. }
+fn filter<T>(order: u32, band_filter: BandFilter, analog: Sampling) {  }
 ```
 
 where T represents the output representation of the filter (Zpk, Ba, Sos), band_filter
 encapsulates the original Wn and btype like this:
 
 ```rust
-enum BandFilter
 
 pub enum BandFilter {
     Highpass(f64),
@@ -45,13 +38,13 @@ pub enum BandFilter {
 }
 ```
 
-and analog encapsulates analog and fs (since a sampling rate makes sense only when talking
+and Sampling encapsulates analog and fs (since a sampling rate makes sense only when talking
 about a digital filter) like this:
 
 ```rust
-pub enum Analog {
-    True,
-    False {
+pub enum Sampling {
+    Analog,
+    Digital {
         fs: f64
     }
 }
@@ -70,4 +63,4 @@ of mathematical physics. Available functions include airy, elliptic, bessel, gam
 hypergeometric, parabolic cylinder, mathieu, spheroidal wave, struve, and kelvin.
 
 
-If there's a specific module or function that you'd like to see been worked on open a pr linking the scipy documentation for the module or function
+License: MIT

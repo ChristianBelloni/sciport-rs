@@ -38,7 +38,7 @@
 //! }
 //! ```
 //!
-//! and analog encapsulates analog and fs (since a sampling rate makes sense only when talking
+//! and Sampling encapsulates analog and fs (since a sampling rate makes sense only when talking
 //! about a digital filter) like this:
 //!
 //! ```
