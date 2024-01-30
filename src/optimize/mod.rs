@@ -175,7 +175,7 @@ where
         f.write_fmt(format_args!(
             "{}",
             [
-                format!("[Optimization Result]"),
+                "[Optimization Result]".to_string(),
                 format!("    flag     : {:?}", self.flag),
                 format!("    sol_x    : {:?}", self.sol_x),
                 format!("    sol_f    : {:?}", self.sol_f),
@@ -186,7 +186,7 @@ where
                 format!("    nfev     : {:?}", self.nfev),
                 format!("    njev     : {:?}", self.njev),
                 format!("    nhev     : {:?}", self.nhev),
-                format!("    [criteria]"),
+                "    [criteria]".to_string(),
                 format!("        xatol         : {:?}", self.criteria.xatol),
                 format!("        xrtol         : {:?}", self.criteria.xrtol),
                 format!("        fatol         : {:?}", self.criteria.fatol),
@@ -195,7 +195,7 @@ where
                 format!("        maxiter       : {:?}", self.criteria.maxiter),
                 format!("        x_metric_type : {:?}", self.criteria.x_metric_type),
                 format!("        f_metric_type : {:?}", self.criteria.f_metric_type),
-                format!("    [Error]"),
+                "    [Error]".to_string(),
                 format!("        err_xa : {:?}", self.err_xa),
                 format!("        err_xr : {:?}", self.err_xr),
                 format!("        err_fa : {:?}", self.err_fa),

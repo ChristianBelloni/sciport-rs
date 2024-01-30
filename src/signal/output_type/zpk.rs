@@ -56,7 +56,7 @@ mod tests {
 
         zpk.z = zpk.z.mapv(|a| rhs * a);
         zpk.p = zpk.p.mapv(|a| rhs * a);
-        zpk.k = rhs * zpk.k;
+        zpk.k *= rhs;
 
         assert_eq!(mul_zpk, zpk);
     }
