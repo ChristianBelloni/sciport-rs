@@ -190,7 +190,7 @@ where
     GenericBa { a, b }
 }
 
-/// lifted from https://docs.rs/approx/latest/src/approx/relative_eq.rs.html#8-30
+/// lifted from <https://docs.rs/approx/latest/src/approx/relative_eq.rs.html#8-30>
 pub fn generic_approx_relative_eq<T: Float + Clone, K: Float + Clone>(
     lhs: &T,
     rhs: &K,

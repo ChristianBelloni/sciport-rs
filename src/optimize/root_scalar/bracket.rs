@@ -313,7 +313,7 @@ where
     }
 }
 
-/// https://mathsfromnothing.au/brents-method/?i=1
+/// <https://mathsfromnothing.au/brents-method/?i=1>
 pub struct Brent<F, R> {
     fun: F,
     a: R,

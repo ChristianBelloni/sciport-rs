@@ -61,7 +61,7 @@ where
     pub fn iter(&self) -> std::slice::Iter<'_, T> {
         self.coef.iter()
     }
-    /// construct a `Polynomial<T>` for a Vec<T>``
+    /// construct a `Polynomial<T>` for a `Vec<T>`
     pub fn from_vec(coef: Vec<T>) -> Self {
         Self { coef }.saturate()
     }
@@ -110,7 +110,7 @@ where
     ///
     /// it return the quotient polynomial and the remainder scalar
     ///
-    /// > https://en.wikipedia.org/wiki/Horner%27s_method
+    /// <https://en.wikipedia.org/wiki/Horner%27s_method>
     pub fn deflate(&self, x: T) -> Option<(Polynomial<T>, T)> {
         let result = self
             .iter()
