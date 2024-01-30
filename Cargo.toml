@@ -18,7 +18,6 @@ ndarray = { version = "0.15.6", features = ["rayon"] }
 itertools = "0.12.0"
 nalgebra = "0.32.3"
 approx = { version = "0.5", features = ["num-complex"] }
-trait-set = "0.3.0"
 thiserror = { version = "1.0" }
 
 [target.'cfg(macos)'.dependencies]

@@ -7,15 +7,10 @@ use num::{
     Complex, Float, Num, Zero,
 };
 use std::fmt::Debug;
-use trait_set::trait_set;
-
-trait_set! {
-    pub trait BilinearZpk = Float;
-}
 
 pub fn bilinear_zpk<T>(input: GenericZpk<T>, fs: T) -> GenericZpk<T>
 where
-    T: BilinearZpk,
+    T: Float,
 {
     let degree = relative_degree(&input);
     let GenericZpk { z, p, k } = input;
