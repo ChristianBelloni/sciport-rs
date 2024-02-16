@@ -27,7 +27,7 @@ where
     let dfun = {
         let evaluator = evaluator.clone();
         let f = fun.clone();
-        
+
         approx_derivative(move |x| f(x))
     };
 

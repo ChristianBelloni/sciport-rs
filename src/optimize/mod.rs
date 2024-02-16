@@ -5,6 +5,7 @@ use std::rc::Rc;
 pub mod criteria;
 pub mod least_square;
 pub mod metric;
+pub mod min_scalar;
 pub mod root_scalar;
 pub mod util;
 
@@ -31,7 +32,7 @@ where
         evaluator.borrow_mut().update(s);
         evaluator.borrow_mut().eval();
     }
-    evaluator.borrow().result()
+    evaluator.borrow().result().clone()
 }
 
 /// # Iterative Solver
@@ -64,11 +65,25 @@ where
     /// update self from the newsolution
     fn update(&mut self, new_solution: (X, F, Option<J>, Option<H>));
     /// evaluate, change self.flag
-    fn eval(&mut self);
-    /// get the result
-    fn result(&self) -> OptimizeResult<X, F, J, H, M>;
+    fn eval(&mut self) {
+        if self.result().satisfy_either() {
+            let satisfied = self.result_mut().satisfied().join(", ");
+            self.result_mut()
+                .set_success(format!("Root finding successful, {} satisfied", satisfied));
+        } else if self.result().overran() {
+            let maxiter = self.result_mut().criteria.maxiter;
+            self.result_mut()
+                .set_failure(format!("Root finding fail, max iter {:?} reached", maxiter));
+        }
+    }
+    /// get the result as reference
+    fn result(&self) -> &OptimizeResult<X, F, J, H, M>;
+    /// get the result as mutable reference
+    fn result_mut(&mut self) -> &mut OptimizeResult<X, F, J, H, M>;
     /// get the flag
-    fn flag(&self) -> &OptimizeResultFlag;
+    fn flag(&self) -> OptimizeResultFlag {
+        self.result().flag.clone()
+    }
 }
 
 /// # OptimizeResultFlag
