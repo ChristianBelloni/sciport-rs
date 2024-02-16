@@ -44,23 +44,10 @@ where
     fn update(&mut self, new_solution: (C, C, Option<C>, Option<C>)) {
         self.res.update(new_solution);
     }
-    fn eval(&mut self) {
-        if self.res.satisfy_either() {
-            self.res.set_success(format!(
-                "Root finding successful, {} satisfied",
-                self.res.satisfied().join(", ")
-            ));
-        } else if self.res.overran() {
-            self.res.set_failure(format!(
-                "Root finding fail, max iter {:?} reached",
-                self.res.criteria.maxiter
-            ));
-        }
+    fn result(&self) -> &OptimizeResult<C, C, C, C, M> {
+        &self.res
     }
-    fn result(&self) -> OptimizeResult<C, C, C, C, M> {
-        self.res.clone()
-    }
-    fn flag(&self) -> &OptimizeResultFlag {
-        &self.res.flag
+    fn result_mut(&mut self) -> &mut OptimizeResult<C, C, C, C, M> {
+        &mut self.res
     }
 }

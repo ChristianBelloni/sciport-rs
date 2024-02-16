@@ -13,7 +13,7 @@ repository = "https://github.com/ChristianBelloni/sciport-rs"
 
 [dependencies]
 num = "0.4"
-complex-bessel-rs = { version = "0.0.5" }
+#complex-bessel-rs = { version = "0.0.5" }
 ndarray = { version = "0.15.6", features = ["rayon"] }
 itertools = "0.12.0"
 nalgebra = "0.32.3"
