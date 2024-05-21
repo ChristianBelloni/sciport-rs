@@ -23,7 +23,7 @@ jobs:
       - name: Install nightly
         uses: dtolnay/rust-toolchain@nightly
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: Install python modules
         run: pip3 install scipy pandas numpy
       - name: cargo generate-lockfile
@@ -47,7 +47,7 @@ jobs:
         if: hashFiles('Cargo.lock') != ''
         uses: dtolnay/rust-toolchain@beta
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: Install python modules
         run: pip3 install scipy pandas numpy
       - name: cargo update

@@ -20,7 +20,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
       - uses: dtolnay/install@cargo-docs-rs
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - run: cargo docs-rs
   fmt:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
         with:
           components: rustfmt
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: cargo fmt --check
         run: cargo fmt --check
   clippy:
@@ -57,7 +57,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: cargo clippy
         uses: actions-rs/clippy-check@v1
         with:
@@ -72,7 +72,7 @@ jobs:
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: cargo install cargo-hack
         uses: taiki-e/install-action@cargo-hack
       # intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
@@ -95,6 +95,6 @@ jobs:
         with:
           toolchain: ${{ matrix.msrv }}
       - name: install fortran compiler
-        run: sudo apt install -y gfortran-13
+        run: sudo apt install -y gfortran
       - name: cargo +${{ matrix.msrv }} check
         run: cargo check
