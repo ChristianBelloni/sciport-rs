@@ -30,19 +30,16 @@ where
     }
 
     fn eval(&mut self) {
-        match (self.result().old_f, self.result().sol_f) {
-            (Some(o), Some(s)) => {
-                if o < s {
-                    self.result_mut().set_failure(format!(
-                        "Minimization fail, function is not strictly unimodal function"
-                    ));
-                    return;
-                }
+        if let (Some(o), Some(s)) = (self.result().old_f, self.result().sol_f) {
+            if o < s {
+                self.result_mut().set_failure(
+                    "Minimization fail, function is not strictly unimodal function".to_string(),
+                );
+                return;
             }
-            _ => {}
         }
 
-        if self.res.old_x == self.res.sol_x{
+        if self.res.old_x == self.res.sol_x {
             return;
         }
 

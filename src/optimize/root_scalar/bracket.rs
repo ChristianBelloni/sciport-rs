@@ -50,11 +50,11 @@ where
 {
     fn new_solution(&mut self) -> (R, R, Option<R>, Option<R>) {
         match self {
-            BracketMethodSolver::Bisect(solver) => solver.new_solution(),
-            BracketMethodSolver::RegularFalsi(solver) => solver.new_solution(),
-            BracketMethodSolver::Ridder(solver) => solver.new_solution(),
-            BracketMethodSolver::Brent(solver) => solver.new_solution(),
-            BracketMethodSolver::InverseCubic(solver) => solver.new_solution(),
+            Self::Bisect(solver) => solver.new_solution(),
+            Self::RegularFalsi(solver) => solver.new_solution(),
+            Self::Ridder(solver) => solver.new_solution(),
+            Self::Brent(solver) => solver.new_solution(),
+            Self::InverseCubic(solver) => solver.new_solution(),
         }
     }
 }
@@ -437,7 +437,7 @@ where
 {
     const DEFAULT_BRACKER: (R, R) = todo!();
     fn new(fun: F, bracket_x: (R, R), bracket_f: (R, R)) -> Self {
-        InverseCubic {
+        Self {
             fun,
             a: (bracket_x.0, bracket_f.0),
             b: None,
@@ -545,12 +545,10 @@ where
                     let m = (a + c) / R::from_f64(2.0).unwrap();
                     let fm = (self.fun)(m);
 
-                    if (fm * fd).is_positive() {
-                        self.b = Some((m, fm));
-                    } else {
+                    if (fm * fd).is_negative() {
                         self.d = (c, fc);
-                        self.b = Some((m, fm));
                     }
+                    self.b = Some((m, fm));
 
                     return (m, fm, None, None);
                 }

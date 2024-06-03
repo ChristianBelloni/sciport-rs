@@ -193,7 +193,7 @@ fn _aberth<
                 return Ok(new_zs);
             }
 
-            zs = new_zs.clone();
+            zs.clone_from(&new_zs);
         }
     }
 

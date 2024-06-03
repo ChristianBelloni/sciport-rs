@@ -27,14 +27,12 @@ where
     let fun = Rc::new(fun);
 
     let dfun = {
-        let evaluator = evaluator.clone();
         let f = fun.clone();
 
         approx_derivative(move |x| f(x))
     };
 
     let ddfun = {
-        let evaluator = evaluator.clone();
         let f = fun.clone();
 
         approx_second_derivative(move |x| f(x))

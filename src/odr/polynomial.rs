@@ -102,8 +102,8 @@ where
     pub fn from_roots_k(roots: impl IntoIterator<Item = T>, k: T) -> Self {
         roots
             .into_iter()
-            .map(|r| Polynomial::from(vec![-r, T::one()]))
-            .fold(Polynomial::one(), |acc, p| acc * p)
+            .map(|r| Self::from(vec![-r, T::one()]))
+            .fold(Self::one(), |acc, p| acc * p)
             * k
     }
     /// return the deflated polynomial using horner's method
@@ -111,7 +111,7 @@ where
     /// it return the quotient polynomial and the remainder scalar
     ///
     /// <https://en.wikipedia.org/wiki/Horner%27s_method>
-    pub fn deflate(&self, x: T) -> Option<(Polynomial<T>, T)> {
+    pub fn deflate(&self, x: T) -> Option<(Self, T)> {
         let result = self
             .iter()
             .rev()
@@ -129,6 +129,7 @@ where
     ///
     /// where all its root will be in complex number data structure
     /// i.e. `Complex32` or `Complexf64`
+    #[must_use]
     pub fn roots<C, M>(&self) -> Vec<C>
     where
         T: PolynomialCoef + Espilon + IntoMetric<M> + IntoComplex<C>,
@@ -157,6 +158,7 @@ where
     T: PolynomialCoef,
 {
     /// take ownership and package the polynomial into `Rc<dyn Fn(T)->T>`
+    #[must_use]
     pub fn as_rc(self) -> Rc<impl Fn(T) -> T> {
         Rc::new(move |x| self.eval(x))
     }
@@ -185,6 +187,8 @@ where
         self.iter().map(|&c| c * rhs).collect()
     }
 }
+
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T> Div<T> for Polynomial<T>
 where
     T: PolynomialCoef,
@@ -221,7 +225,7 @@ where
         self.iter()
             .enumerate()
             .map(|(i, &c)| rhs.mul_power(i) * c)
-            .fold(Polynomial::zero(), |acc, p| acc + p)
+            .fold(Self::zero(), |acc, p| acc + p)
     }
 }
 
@@ -252,7 +256,7 @@ where
                         if i == 0 {
                             String::new()
                         } else {
-                            format!(" * x^{:<3}", i)
+                            format!(" * x^{i:<3}")
                         }
                     )
                 })
@@ -279,7 +283,7 @@ where
     T: PolynomialCoef + 'a,
 {
     fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
-        iter.into_iter().cloned().collect()
+        iter.into_iter().copied().collect()
     }
 }
 

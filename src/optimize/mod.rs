@@ -97,22 +97,13 @@ pub enum OptimizeResultFlag {
 
 impl OptimizeResultFlag {
     fn is_running(&self) -> bool {
-        match self {
-            Self::Running => true,
-            _ => false,
-        }
+        matches!(self, Self::Running)
     }
     fn is_success(&self) -> bool {
-        match self {
-            Self::Success(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Success(_))
     }
     fn is_failure(&self) -> bool {
-        match self {
-            Self::Failure(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Failure(_))
     }
 }
 

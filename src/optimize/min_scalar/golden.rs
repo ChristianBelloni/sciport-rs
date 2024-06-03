@@ -3,7 +3,7 @@ use std::io::Read;
 use crate::optimize::min_scalar::*;
 use crate::optimize::util::*;
 
-const GOLDEN_RATIO: f64 = 0.618_0339_887;
+const GOLDEN_RATIO: f64 = 0.618_033_988_7;
 
 pub fn golden_method<F, R, M>(
     fun: F,

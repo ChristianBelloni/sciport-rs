@@ -4,25 +4,25 @@ use crate::optimize::util::Espilon;
 use num::complex::{Complex32, Complex64, ComplexFloat};
 
 pub trait IntoComplex<C>: ComplexFloat {
-    fn into_complex(&self) -> C;
+    fn as_complex(&self) -> C;
 }
 impl IntoComplex<Complex32> for f32 {
-    fn into_complex(&self) -> Complex32 {
+    fn as_complex(&self) -> Complex32 {
         Complex32::new(*self, 0.0)
     }
 }
 impl IntoComplex<Complex64> for f64 {
-    fn into_complex(&self) -> Complex64 {
+    fn as_complex(&self) -> Complex64 {
         Complex64::new(*self, 0.0)
     }
 }
 impl IntoComplex<Complex32> for Complex32 {
-    fn into_complex(&self) -> Complex32 {
+    fn as_complex(&self) -> Complex32 {
         *self
     }
 }
 impl IntoComplex<Complex64> for Complex64 {
-    fn into_complex(&self) -> Complex64 {
+    fn as_complex(&self) -> Complex64 {
         *self
     }
 }
@@ -59,7 +59,7 @@ where
 {
     let polynomial: Polynomial<C> = polynomial
         .iter()
-        .map(|&c| c.into_complex())
+        .map(|&c| c.as_complex())
         .collect::<Polynomial<C>>()
         .saturate();
 

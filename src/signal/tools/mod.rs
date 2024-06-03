@@ -66,13 +66,14 @@ pub fn relative_degree<T>(input: &GenericZpk<T>) -> usize {
 /// let coeffs = poly((&complex_z).into());
 ///
 /// ```
+#[must_use]
 pub fn poly<T: Num + Copy>(zeroes: ArrayView1<'_, T>) -> Array1<T> {
     let mut coeff = array![T::one()];
     for z in zeroes {
         let mut clone = coeff.clone();
         mul_by_x(&mut coeff);
         mul_by_scalar(clone.view_mut(), *z);
-        sub_coeff(coeff.slice_mut(s![1..]), clone)
+        sub_coeff(coeff.slice_mut(s![1..]), &clone);
     }
     coeff
 }
@@ -85,9 +86,9 @@ fn mul_by_scalar<T: Num + Copy>(mut coeff: ArrayViewMut1<T>, scalar: T) {
     coeff.map_inplace(move |a| *a = *a * scalar);
 }
 
-fn sub_coeff<T: Num + Copy>(mut coeff: ArrayViewMut1<T>, ar: Array1<T>) {
+fn sub_coeff<T: Num + Copy>(mut coeff: ArrayViewMut1<T>, ar: &Array1<T>) {
     for (i, c) in coeff.iter_mut().enumerate() {
-        *c = *c - ar[i]
+        *c = *c - ar[i];
     }
 }
 
@@ -131,11 +132,11 @@ where
 
     let roots = z;
     let mut pos_roots: Vec<Complex<T>> =
-        roots.iter().cloned().filter(|a| a.im > T::zero()).collect();
+        roots.iter().copied().filter(|a| a.im > T::zero()).collect();
     let mut neg_roots: Vec<Complex<T>> = roots
         .iter()
         .filter(|a| a.im < T::zero())
-        .map(|a| a.conj())
+        .map(Complex::conj)
         .collect();
 
     if pos_roots.len() == neg_roots.len() {
@@ -154,11 +155,11 @@ where
 
     let roots = p;
     let mut pos_roots: Vec<Complex<T>> =
-        roots.iter().cloned().filter(|a| a.im > T::zero()).collect();
+        roots.iter().copied().filter(|a| a.im > T::zero()).collect();
     let mut neg_roots: Vec<Complex<T>> = roots
         .iter()
         .filter(|a| a.im < T::zero())
-        .map(|a| a.conj())
+        .map(Complex::conj)
         .collect();
 
     if pos_roots.len() == neg_roots.len() {
@@ -241,12 +242,12 @@ pub fn generic_approx_complex_relative_eq_dbg<
     epsilon: T,
     max_relative: T,
 ) -> bool {
-    let res = generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon, max_relative)
+    let result = generic_approx_relative_eq(&lhs.re, &rhs.re, epsilon, max_relative)
         && generic_approx_relative_eq(&lhs.im, &rhs.im, epsilon, max_relative);
-    if !res {
-        println!("difference {:?} {:?}", lhs, rhs);
+    if !result {
+        println!("difference {lhs:?} {rhs:?}");
     }
-    res
+    result
 }
 
 pub fn generic_approx_relative_slice_eq<T: Float + Clone>(
@@ -271,7 +272,7 @@ pub fn generic_approx_complex_relative_slice_eq<T: Float + Clone, K: Float + Clo
     zip.enumerate().fold(true, |acc, (i, (lhs, rhs))| {
         let new = generic_approx_complex_relative_eq(lhs, rhs, epsilon, max_relative);
         if !new {
-            println!("difference at {}", i);
+            println!("difference at {i}");
         }
         acc && new
     })
@@ -298,14 +299,16 @@ fn sort_complex<T>(cxs: &mut [Complex<T>])
 where
     T: Float,
 {
-    cxs.sort_by(|a, b| match a.re.partial_cmp(&b.re) {
-        Some(comp) => match comp {
-            std::cmp::Ordering::Less => std::cmp::Ordering::Less,
-            std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
-            std::cmp::Ordering::Equal => {
-                a.im.partial_cmp(&b.im).unwrap_or(std::cmp::Ordering::Equal)
-            }
-        },
-        None => a.im.partial_cmp(&b.im).unwrap_or(std::cmp::Ordering::Equal),
-    })
+    cxs.sort_by(|a, b| {
+        a.re.partial_cmp(&b.re).map_or_else(
+            || a.im.partial_cmp(&b.im).unwrap_or(std::cmp::Ordering::Equal),
+            |comp| match comp {
+                std::cmp::Ordering::Less => std::cmp::Ordering::Less,
+                std::cmp::Ordering::Greater => std::cmp::Ordering::Greater,
+                std::cmp::Ordering::Equal => {
+                    a.im.partial_cmp(&b.im).unwrap_or(std::cmp::Ordering::Equal)
+                }
+            },
+        )
+    });
 }

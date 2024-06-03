@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::nursery)]
+
 //! # Sciport-rs
 //!
 //! Sciport is a collection of mathematical algorithms ported from the popular python package Scipy
